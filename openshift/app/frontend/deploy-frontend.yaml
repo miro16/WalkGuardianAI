@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: walkguardianai-frontend
+  namespace: walkguardianai
+  labels:
+    app: walkguardianai-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: walkguardianai-frontend
+  template:
+    metadata:
+      labels:
+        app: walkguardianai-frontend
+    spec:
+      containers:
+        - name: walkguardianai-frontend
+          # Obraz z wewnętrznego registry OpenShift z tagiem 'latest'
+          image: image-registry.openshift-image-registry.svc:5000/walkguardianai/walkguardianai-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: walkguardianai-frontend
+  namespace: walkguardianai
+  labels:
+    app: walkguardianai-frontend
+spec:
+  selector:
+    app: walkguardianai-frontend
+  ports:
+    - name: http
+      port: 80        # port serwisu w klastrze
+      targetPort: http   # mapuje na containerPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: walkguardianai-frontend
+  namespace: walkguardianai
+  labels:
+    app: walkguardianai-frontend
+spec:
+  to:
+    kind: Service
+    name: walkguardianai-frontend
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect 

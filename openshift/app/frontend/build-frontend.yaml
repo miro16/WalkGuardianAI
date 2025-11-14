@@ -1,0 +1,32 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: walkguardianai-frontend
+  namespace: walkguardianai
+  labels:
+    app: walkguardianai
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: walkguardianai-frontend
+  namespace: walkguardianai
+  labels:
+    app: walkguardianai
+spec:
+  source:
+    type: Git
+    git:
+      uri: "https://github.com/miro16/WalkGuardianAI.git"
+    contextDir: my-app
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Containerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: walkguardianai-frontend:latest
+  triggers:
+    - type: ConfigChange
+    - type: Git
