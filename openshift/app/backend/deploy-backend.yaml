@@ -26,35 +26,8 @@ spec:
           env:
             - name: UVICORN_PORT
               value: "8000"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: walkguardianai-backend
-  namespace: walkguardianai
-  labels:
-    app: walkguardianai-backend
-spec:
-  selector:
-    app: walkguardianai-backend
-  ports:
-    - name: http
-      port: 8000         # port serwisu w klastrze
-      targetPort: http   # mapuje na containerPort: 8000
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: walkguardianai-backend
-  namespace: walkguardianai
-  labels:
-    app: walkguardianai-backend
-spec:
-  to:
-    kind: Service
-    name: walkguardianai-backend
-  port:
-    targetPort: http
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
+          envFrom:
+            - configMapRef:
+                name: walkguardianai-backend
+            - secretRef:
+                name: walkguardianai-backend

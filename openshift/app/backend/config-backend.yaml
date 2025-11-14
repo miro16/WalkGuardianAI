@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: walkguardianai-backend
+  namespace: walkguardianai
+data:
+  LLM_MODEL_NAME: "granite-40-h-1b"
+  LLM_BASE_URL: "https://granite-40-h-1b-walkguardianai-llm.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com/v1"
