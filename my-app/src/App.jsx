@@ -1,33 +1,30 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import LoadingScreen from './components/LoadingScreen'
+import AddressSelector from './components/AddressSelector'
+import MapRoute from './components/MapRoute'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [selectedAddress, setSelectedAddress] = useState(null)
+
+  const handleLoadingComplete = () => {
+    setIsLoaded(true)
+  }
+
+  const handleAddressSelect = (address) => {
+    setSelectedAddress(address)
+  }
+
+  const handleBackToSelector = () => {
+    setSelectedAddress(null)
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {!isLoaded && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
+      {isLoaded && !selectedAddress && <AddressSelector onAddressSelect={handleAddressSelect} />}
+      {isLoaded && selectedAddress && <MapRoute address={selectedAddress} onBack={handleBackToSelector} />}
     </>
   )
 }
