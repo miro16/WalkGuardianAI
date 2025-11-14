@@ -25,6 +25,30 @@
   animation: slideUp 0.5s ease-out;
 }
 
+.backend-status {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.backend-status.online {
+  color: #0b6623;
+  background: rgba(11, 102, 35, 0.06);
+}
+
+.backend-status.offline {
+  color: #8b0000;
+  background: rgba(139, 0, 0, 0.04);
+}
+
+.backend-status.checking {
+  color: #444;
+  background: rgba(0,0,0,0.03);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
