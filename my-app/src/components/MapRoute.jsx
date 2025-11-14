@@ -118,8 +118,7 @@ export default function MapRoute({ address, onBack }) {
   const handleCheckBackendHealth = async () => {
     setCheckingBackend(true)
     try {
-      // Call backend pod from frontend pod on OpenShift
-      const resp = await fetch('https://walkguardianai-backend-walkguardianai.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com/health')
+      const resp = await fetch('walkguardianai-backend/health')
       if (resp.ok) {
         const data = await resp.json()
         setBackendStatus(data.status || 'ok')
