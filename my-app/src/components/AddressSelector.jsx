@@ -21,7 +21,7 @@ export default function AddressSelector({ onAddressSelect }) {
 
     async function checkHealth() {
       try {
-        const res = await fetch('/health')
+        const res = await fetch('walkguardianai-backend/health')
         if (cancelled) return
         if (res.ok) {
           const data = await res.json()
