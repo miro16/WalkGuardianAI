@@ -175,7 +175,7 @@ def health_check():
 # ---------------------------------------------------------
 
 @app.post("/api/session/start")
-def start_session(body: StartSessionRequest):
+async def start_session(body: StartSessionRequest):
     """
     Start a new safety session for WalkGuardianAI.
     For MVP we keep only one active session in memory.
@@ -351,7 +351,7 @@ def get_notifications(session_id: str):
 
 
 @app.post("/api/session/stop")
-def stop_session(body: StopSessionRequest):
+async def stop_session(body: StopSessionRequest):
     """
     Stop the current safety session.
     Marks the session as not active and adds a notification.
