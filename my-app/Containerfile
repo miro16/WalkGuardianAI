@@ -18,9 +18,9 @@ FROM nginx:stable-alpine
 # Na chwilę root – tylko do ustawienia praw
 USER root
 
-RUN mkdir -p /var/cache/nginx /var/run/nginx /usr/share/nginx/html \
-    && chgrp -R 0 /var/cache/nginx /var/run/nginx /etc/nginx /usr/share/nginx/html \
-    && chmod -R g+rwX /var/cache/nginx /var/run/nginx /etc/nginx /usr/share/nginx/html \
+RUN mkdir -p /var/cache/nginx /var/run/nginx /usr/share/nginx/html /run \
+    && chgrp -R 0 /var/cache/nginx /var/run/nginx /run /etc/nginx /usr/share/nginx/html \
+    && chmod -R g+rwX /var/cache/nginx /var/run/nginx /run /etc/nginx /usr/share/nginx/html \
     # wyłącz directive "user nginx;" żeby nie było warningu
     && sed -i 's/^user .*;/# user nginx;/' /etc/nginx/nginx.conf
 
