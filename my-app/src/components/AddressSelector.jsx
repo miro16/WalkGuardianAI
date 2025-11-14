@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './AddressSelector.css'
 
 export default function AddressSelector({ onAddressSelect }) {
   const [city, setCity] = useState('')
   const [street, setStreet] = useState('')
   const [streetNumber, setStreetNumber] = useState('')
+  const [backendStatus, setBackendStatus] = useState(null)
 
   const isComplete = city.trim() && street.trim() && streetNumber.trim()
 
@@ -15,9 +16,39 @@ export default function AddressSelector({ onAddressSelect }) {
     }
   }
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function checkHealth() {
+      try {
+        const res = await fetch('/health')
+        if (cancelled) return
+        if (res.ok) {
+          const data = await res.json()
+          setBackendStatus(data.status || 'ok')
+        } else {
+          setBackendStatus('unavailable')
+        }
+      } catch (err) {
+        if (cancelled) return
+        console.debug('Health check failed', err)
+        setBackendStatus('unreachable')
+      }
+    }
+
+    checkHealth()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="address-container">
       <div className="address-card">
+        <div className={`backend-status ${backendStatus === 'ok' ? 'online' : backendStatus ? 'offline' : 'checking'}`}>
+          Backend: {backendStatus ? backendStatus : 'checking...'}
+        </div>
         <h1>WalkGuardianAI</h1>
         <p className="subtitle">Safe walks in any weather</p>
         
