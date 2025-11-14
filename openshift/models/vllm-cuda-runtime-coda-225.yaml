@@ -1,0 +1,32 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+ name: vllm-cuda-runtime-coda-225
+ annotations:
+   openshift.io/display-name: vLLM (NVIDIA GPU)
+   opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
+ labels:
+   opendatahub.io/dashboard: 'true'
+spec:
+ supportedModelFormats:
+   - name: vLLM
+     autoSelect: true
+ containers:
+   - name: kserve-container
+     image: quay.io/modh/vllm:rhoai-2.25-cuda
+     command: ["python", "-m", "vllm.entrypoints.openai.api_server"]
+     args:
+       - "--port=8080"
+       - "--model=/mnt/models"
+       - "--served-model-name={{.Name}}"
+     env:
+       - name: HF_HOME
+         value: /tmp/hf_home
+     ports:
+       - containerPort: 8080
+         protocol: TCP
+     resources:
+       requests:
+         nvidia.com/gpu: '1'
+       limits:
+         nvidia.com/gpu: '1'
