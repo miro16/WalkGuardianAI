@@ -88,9 +88,9 @@ commands:
             python3 -m venv /projects/.venv || true
             . /projects/.venv/bin/activate 2>/dev/null || true
             python -m pip install --upgrade pip wheel setuptools || true
-            if [ -f /projects/redhat-devspaces/requirements.txt ]; then
+            if [ -f /projects/walkguardianai/requirements.txt ]; then
               echo "Installing from requirements.txt ..."
-              pip install -r /projects/redhat-devspaces/requirements.txt || echo "[WARN] pip install failed (see above)."
+              pip install -r /projects/walkguardianai/requirements.txt || echo "[WARN] pip install failed (see above)."
             else
               echo "requirements.txt not found; skipping."
             fi
@@ -116,11 +116,11 @@ commands:
         bash -lc '
           set -euxo pipefail
           python -m pip install --upgrade pip wheel setuptools
-          test -f /projects/redhat-devspaces/requirements.txt
+          test -f /projects/walkguardianai/requirements.txt
           python3 -m venv /projects/.venv
           . /projects/.venv/bin/activate
           python -m pip install --upgrade pip wheel setuptools
-          pip install -r /projects/redhat-devspaces/requirements.txt
+          pip install -r /projects/walkguardianai/requirements.txt
           if ! grep -q "/projects/.venv/bin/activate" ~/.bashrc 2>/dev/null; then
             echo ". /projects/.venv/bin/activate" >> ~/.bashrc
           fi
