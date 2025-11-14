@@ -7,8 +7,9 @@ export default function MapRoute({ address, onBack }) {
   const recognitionRef = useRef(null)
   const [currentLocation, setCurrentLocation] = useState(null)
   const [locationError, setLocationError] = useState(null)
-  const [currentAddress, setCurrentAddress] = useState(null)
-  const [resolvingAddress, setResolvingAddress] = useState(false)
+  const [backendStatus, setBackendStatus] = useState(null)
+  const [checkingBackend, setCheckingBackend] = useState(false)
+
 
   useEffect(() => {
     return () => {
@@ -45,41 +46,7 @@ export default function MapRoute({ address, onBack }) {
     }
   }, [])
 
-  useEffect(() => {
-    if (!currentLocation) return
 
-    let mounted = true
-    const { lat, lng } = currentLocation
-
-    const doReverseGeocode = async () => {
-      setResolvingAddress(true)
-      try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`
-        const resp = await fetch(url, { headers: { Accept: 'application/json' } })
-        if (!mounted) return
-        if (!resp.ok) throw new Error('Reverse geocoding failed')
-        const data = await resp.json()
-        if (data && data.display_name) {
-          setCurrentAddress(data.display_name)
-        } else {
-          setCurrentAddress(null)
-        }
-      } catch (err) {
-        if (!mounted) return
-        console.error('Reverse geocode error:', err)
-        setLocationError('Address lookup failed')
-      } finally {
-        if (!mounted) return
-        setResolvingAddress(false)
-      }
-    }
-
-    doReverseGeocode()
-
-    return () => {
-      mounted = false
-    }
-  }, [currentLocation])
 
   const handleStartListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -147,6 +114,26 @@ export default function MapRoute({ address, onBack }) {
   const handleClearTranscript = () => {
     setTranscript('')
   }
+
+  const handleCheckBackendHealth = async () => {
+    setCheckingBackend(true)
+    try {
+      // Call backend pod from frontend pod on OpenShift
+      const resp = await fetch('http://walkguardianai-backend/health')
+      if (resp.ok) {
+        const data = await resp.json()
+        setBackendStatus(data.status || 'ok')
+      } else {
+        setBackendStatus('unavailable')
+      }
+    } catch (err) {
+      console.debug('Health check failed', err)
+      setBackendStatus('unreachable')
+    } finally {
+      setCheckingBackend(false)
+    }
+  }
+
   return (
     <div className="map-container">
       <div className="map-header">
@@ -155,11 +142,7 @@ export default function MapRoute({ address, onBack }) {
         </button>
         <h1>My Route</h1>
         <div className="current-location">
-          {currentAddress ? (
-            <p className="location-text">📡 Your location: {currentAddress}</p>
-          ) : resolvingAddress ? (
-            <p className="location-resolving">Resolving address…</p>
-          ) : currentLocation ? (
+          {currentLocation ? (
             <p className="location-text">📡 Your location: {currentLocation.lat.toFixed(5)}, {currentLocation.lng.toFixed(5)}</p>
           ) : locationError ? (
             <p className="location-error">⚠️ {locationError}</p>
@@ -197,6 +180,20 @@ export default function MapRoute({ address, onBack }) {
             >
               Clear
             </button>
+          )}
+
+          <button 
+            className="health-button"
+            onClick={handleCheckBackendHealth}
+            disabled={checkingBackend}
+          >
+            {checkingBackend ? '🔄 Checking...' : '🏥 Backend'}
+          </button>
+
+          {backendStatus && (
+            <div className={`health-status ${backendStatus === 'ok' ? 'online' : 'offline'}`}>
+              {backendStatus}
+            </div>
           )}
         </div>
       </div>
