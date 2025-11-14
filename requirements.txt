@@ -11,7 +11,7 @@ httpx==0.27.2          # async HTTP client (for Llama Stack / vLLM)
 # === Model Interaction ===
 openai==1.48.0         # compatible client for OpenAI-like APIs (works with vLLM / Llama Stack)
 transformers==4.46.0   # for local inference or fallback model
-accelerate==0.33.0     # for lightweight GPU acceleration (optional local testing)
+# accelerate==0.33.0     # for lightweight GPU acceleration (optional local testing)
 torch==2.4.0            # only if fine-tuning or local testing required
 vllm==0.5.5             # for RHOAI or Podman local vLLM inference (optional)
 
@@ -24,10 +24,10 @@ uvloop==0.20.0
 
 # bonus points
 # InstructLab fine-tuning / Granite interaction
-instructlab==0.26.1       # Granite retraining pipeline
+# instructlab==0.26.1       # Granite retraining pipeline
 huggingface_hub==0.25.1  # Model management and uploads
 notebook==7.2.2          # For Jupyter on RHOAI
-jupyterlab==4.3.1
+jupyterlab==4.2.0
 
 
 #  Frontend serving (if React built locally)
