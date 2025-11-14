@@ -106,6 +106,7 @@
   background: white;
   padding: 20px 16px;
   border-top: 1px solid #e0e0e0;
+  overflow-y: auto;
 }
 
 .route-info h2 {
@@ -147,7 +148,7 @@
   width: calc(100% - 32px);
   margin: 0 16px 16px 16px;
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #00d084 0%, #00a86b 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -162,45 +163,135 @@
 
 .start-route-button:active {
   transform: scale(0.98);
+  box-shadow: 0 5px 15px rgba(0, 200, 132, 0.4);
+}
+
+.listen-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+  flex: 1;
+}
+
+.listen-button:active {
+  transform: scale(0.98);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.listen-button.listening {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.speech-section {
+  background: white;
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.speech-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.transcript-box {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transcript-text {
+  margin: 0;
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.transcript-placeholder {
+  margin: 0;
+  color: #999;
+  font-size: 0.85rem;
+  text-align: center;
+  font-style: italic;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.clear-button {
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+}
+
+.clear-button:active {
+  transform: scale(0.98);
+  background: #d0d0d0;
 }
 
 /* iPhone specific */
 @media (max-width: 480px) {
-  .map-header {
+  .speech-section {
     padding: 12px;
-    gap: 8px;
-  }
-
-  .map-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .map-placeholder {
-    gap: 12px;
-  }
-
-  .map-placeholder p {
-    font-size: 1.2rem;
-  }
-
-  .route-stats {
-    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
 
-  .stat {
+  .listen-button {
+    padding: 11px 14px;
+    font-size: 0.9rem;
+  }
+
+  .clear-button {
+    padding: 11px 12px;
+    font-size: 0.85rem;
+  }
+
+  .transcript-box {
+    min-height: 50px;
     padding: 10px;
   }
 
-  .stat-value {
-    font-size: 1.1rem;
-  }
-
-  .start-route-button {
-    margin: 0 12px 12px 12px;
-    width: calc(100% - 24px);
-    padding: 14px;
-    font-size: 0.95rem;
+  .transcript-text {
+    font-size: 0.85rem;
   }
 }
