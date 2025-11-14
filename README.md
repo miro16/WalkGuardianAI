@@ -1,1 +1,1 @@
-"# WalkGuard AI" 
+"# WalkGuardian AI" 
