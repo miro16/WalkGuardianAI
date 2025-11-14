@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, Literal, List
 from datetime import datetime, timezone
 import uuid
+import httpx
 
 # ---------------------------------------------------------
 # WalkGuardianAI - backend MVP (in-memory, keyword-based)
@@ -112,17 +113,18 @@ def analyze_text(text: str) -> dict:
         "reason": "No dangerous keywords detected",
     }
 
-
-def add_notification(notification_type: str, message: str) -> None:
+async def add_notification(notification_type: str, message: str) -> None:
     """
     Append a notification to the current session's notifications list.
-    In a real system this could send SMS, email, Discord, etc.
+    For 'discord' contacts, also send a Discord message via webhook.
     """
     global current_session
     if current_session is None:
         return
 
     now = datetime.now(timezone.utc).isoformat()
+
+    # 1) Store notification in memory
     current_session["notifications"].append(
         {
             "type": notification_type,
@@ -131,6 +133,29 @@ def add_notification(notification_type: str, message: str) -> None:
         }
     )
     current_session["updated_at"] = now
+
+    # 2) Send to Discord if configured
+    contact = current_session.get("contact")
+    if contact and contact.get("type") == "discord":
+        webhook_url = contact.get("value")
+        # Build a nice human-readable message in English
+        content = f"[WalkGuardianAI] {notification_type} at {now}\n{message}"
+        await send_discord_message(webhook_url, content)
+
+
+async def send_discord_message(webhook_url: str, content: str) -> None:
+    """
+    Send a simple message to a Discord channel using a webhook URL.
+    Non-blocking and best-effort: errors are printed but do not crash the app.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            payload = {"content": content}
+            response = await client.post(webhook_url, json=payload)
+            if response.status_code >= 400:
+                print(f"[WalkGuardianAI] Discord webhook failed: {response.status_code} {response.text}")
+    except Exception as e:
+        print(f"[WalkGuardianAI] Error calling Discord webhook: {e}")
 
 
 # ---------------------------------------------------------
@@ -185,7 +210,7 @@ def start_session(body: StartSessionRequest):
     }
 
     # Simulate notification to the trusted contact
-    add_notification(
+    await add_notification(
         "SESSION_STARTED",
         f"User started a walk towards '{body.destination}'.",
     )
@@ -229,7 +254,7 @@ def update_location(body: LocationUpdateRequest):
 
 
 @app.post("/api/session/audio-text")
-def audio_text(body: AudioTextRequest):
+async def audio_text(body: AudioTextRequest):
     """
     Receive a piece of transcribed audio for the current session.
     Analyze it with a simple keyword-based analyzer.
@@ -254,7 +279,7 @@ def audio_text(body: AudioTextRequest):
     # If the analyzer says DANGER, update session risk and notify contact
     if result["risk"] == "DANGER":
         current_session["risk"] = "DANGER"
-        add_notification(
+        await add_notification(
             "DANGER_AUDIO",
             f"Potential danger detected in conversation: {result['reason']}",
         )
@@ -342,7 +367,7 @@ def stop_session(body: StopSessionRequest):
     current_session["is_active"] = False
     current_session["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    add_notification(
+    await add_notification(
         "SESSION_STOPPED",
         "User stopped the walk.",
     )
