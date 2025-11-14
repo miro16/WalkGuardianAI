@@ -1,1 +1,1 @@
-"# SafeWalkAI" 
+"# WalkGuard AI" 
