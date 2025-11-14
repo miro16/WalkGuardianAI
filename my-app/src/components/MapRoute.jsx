@@ -5,15 +5,81 @@ export default function MapRoute({ address, onBack }) {
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const recognitionRef = useRef(null)
+  const [currentLocation, setCurrentLocation] = useState(null)
+  const [locationError, setLocationError] = useState(null)
+  const [currentAddress, setCurrentAddress] = useState(null)
+  const [resolvingAddress, setResolvingAddress] = useState(false)
 
   useEffect(() => {
     return () => {
-      // Cleanup: abort recognition on unmount
       if (recognitionRef.current) {
         recognitionRef.current.abort()
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      // avoid synchronous setState inside effect
+      setTimeout(() => setLocationError('Geolocation not supported by browser'), 0)
+      return
+    }
+
+    let mounted = true
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (!mounted) return
+        const { latitude, longitude } = pos.coords
+        setCurrentLocation({ lat: latitude, lng: longitude })
+        setLocationError(null)
+      },
+      (err) => {
+        if (!mounted) return
+        setLocationError(err.message)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!currentLocation) return
+
+    let mounted = true
+    const { lat, lng } = currentLocation
+
+    const doReverseGeocode = async () => {
+      setResolvingAddress(true)
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`
+        const resp = await fetch(url, { headers: { Accept: 'application/json' } })
+        if (!mounted) return
+        if (!resp.ok) throw new Error('Reverse geocoding failed')
+        const data = await resp.json()
+        if (data && data.display_name) {
+          setCurrentAddress(data.display_name)
+        } else {
+          setCurrentAddress(null)
+        }
+      } catch (err) {
+        if (!mounted) return
+        console.error('Reverse geocode error:', err)
+        setLocationError('Address lookup failed')
+      } finally {
+        if (!mounted) return
+        setResolvingAddress(false)
+      }
+    }
+
+    doReverseGeocode()
+
+    return () => {
+      mounted = false
+    }
+  }, [currentLocation])
 
   const handleStartListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -23,12 +89,11 @@ export default function MapRoute({ address, onBack }) {
       return
     }
 
-    // Create a new instance for each recording session
     const recognition = new SpeechRecognition()
     recognitionRef.current = recognition
     
     recognition.lang = 'en-US'
-    recognition.continuous = false
+    recognition.continuous = true
     recognition.interimResults = false
 
     recognition.onstart = () => {
@@ -89,33 +154,21 @@ export default function MapRoute({ address, onBack }) {
           ← Back
         </button>
         <h1>My Route</h1>
+        <div className="current-location">
+          {currentAddress ? (
+            <p className="location-text">📡 Your location: {currentAddress}</p>
+          ) : resolvingAddress ? (
+            <p className="location-resolving">Resolving address…</p>
+          ) : currentLocation ? (
+            <p className="location-text">📡 Your location: {currentLocation.lat.toFixed(5)}, {currentLocation.lng.toFixed(5)}</p>
+          ) : locationError ? (
+            <p className="location-error">⚠️ {locationError}</p>
+          ) : (
+            <p className="location-placeholder">Locating your position…</p>
+          )}
+        </div>
         <div className="address-info">
           <p className="address-text">📍 {address}</p>
-        </div>
-      </div>
-
-      <div className="map-wrapper">
-        <div className="map-placeholder">
-          <p>🗺️ Map will be displayed here</p>
-          <small>Address: {address}</small>
-        </div>
-      </div>
-
-      <div className="route-info">
-        <h2>Route Information</h2>
-        <div className="route-stats">
-          <div className="stat">
-            <span className="stat-label">Distance:</span>
-            <span className="stat-value">-</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Time:</span>
-            <span className="stat-value">-</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Safety:</span>
-            <span className="stat-value">-</span>
-          </div>
         </div>
       </div>
 
@@ -134,7 +187,7 @@ export default function MapRoute({ address, onBack }) {
             className={`listen-button ${isListening ? 'listening' : ''}`}
             onClick={isListening ? handleStopListening : handleStartListening}
           >
-            {isListening ? '⏹️ Stop Recording' : '🎤 Listen'}
+            {isListening ? '⏹️ Stop Recording' : '🚶 Start Walk'}
           </button>
           
           {transcript && (
@@ -147,11 +200,6 @@ export default function MapRoute({ address, onBack }) {
           )}
         </div>
       </div>
-
-      <button className="start-route-button">
-        🚶 Start Walk
-      </button>
-
       
     </div>
   )
