@@ -16,7 +16,7 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 # Copy built assets (Vite outputs to /dist)
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /my-app/dist /usr/share/nginx/html
 
 # Use custom nginx config for SPA fallback and cache headers
 COPY nginx.conf /etc/nginx/conf.d/default.conf
