@@ -1,0 +1,32 @@
+# Containerfile dla backendu WalkGuardianAI
+
+# 1. Bazowy obraz z Pythonem
+FROM python:3.12-slim
+
+# 2. Ustawienia Pythona (nie zapisujemy .pyc, logi lecą na stdout)
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# 3. Katalog roboczy w kontenerze
+WORKDIR /app
+
+# 4. Skopiuj dependencies (requirements) osobno,
+#    żeby warstwa z pip install cache'owała się między buildami
+COPY requirements.txt .
+
+# 5. Instalacja zależności
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 6. Skopiuj kod aplikacji WalkGuardianAI
+COPY app ./app
+
+# 7. Upewnij się, że katalog ma odpowiednie uprawnienia
+#    (ważne na OpenShift, który często używa randomowego UID)
+RUN chmod -R g=u /app
+
+# 8. Domyślny port aplikacji (FastAPI/Uvicorn)
+EXPOSE 8000
+
+# 9. Komenda startowa:
+#    uruchamiamy WalkGuardianAI backend przez Uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
