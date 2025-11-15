@@ -15,7 +15,7 @@ async def add_notification(session_id: str, notification_type: str, message: str
         return
 
     now = datetime.now(timezone.utc).isoformat()
-    human_time = now_utc.strftime("%Y-%m-%d %H:%M:%S %Z")
+    human_time = now.strftime("%Y-%m-%d %H:%M:%S %Z")
 
     # 1) Store notification in memory
     session.setdefault("notifications", []).append(
