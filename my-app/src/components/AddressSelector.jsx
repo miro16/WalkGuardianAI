@@ -63,28 +63,24 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
       }
     })()
 
-    const contactType = channel === 'Discord' ? 'discord' : 'email'
+    const contactType = channel === 'Discord' ? 'discord' : 'phone'
 
     const payload = {
+      // Required user fields (snake_case)
+      first_name: storedUser?.firstName ?? '',
+      last_name: storedUser?.lastName ?? '',
+      age: (() => {
+        const n = Number(storedUser?.age)
+        return Number.isFinite(n) ? n : 0
+      })(),
+      diseases: (storedUser?.diseases ?? '').trim(),
+      allergies: (storedUser?.allergies ?? '').trim(),
+      medications: (storedUser?.medications ?? '').trim(),
+      // Session fields
       start_location: { lat, lng },
       destination: destinationAddress,
       contact: { type: contactType, value: guardian || '' },
-      audio_enabled: true,
-      // Flattened user data to match backend (snake_case)
-      first_name: storedUser?.firstName ?? '',
-      last_name: storedUser?.lastName ?? ''
-    }
-    if (storedUser?.age && !Number.isNaN(Number(storedUser.age))) {
-      payload.age = Number(storedUser.age)
-    }
-    if (storedUser?.diseases?.trim()) {
-      payload.diseases = storedUser.diseases.trim()
-    }
-    if (storedUser?.allergies?.trim()) {
-      payload.allergies = storedUser.allergies.trim()
-    }
-    if (storedUser?.medications?.trim()) {
-      payload.medications = storedUser.medications.trim()
+      audio_enabled: true
     }
 
     try {
