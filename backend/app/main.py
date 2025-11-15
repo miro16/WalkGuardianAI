@@ -24,6 +24,7 @@ from .analysis import analyze_text
 from .notifications import add_notification
 from .llama_client import LlamaBackend
 from .reverse_geocode import reverse_geocode
+from .transcript_store import TranscriptStore
 
 # ---------------------------------------------------------
 # WalkGuardianAI - backend MVP (in-memory, multi-session)
@@ -98,6 +99,7 @@ async def start_session(body: StartSessionRequest):
         "audio_enabled": body.audio_enabled,
         "risk": "SAFE",
         "notifications": [],
+        "transcript": TranscriptStore(max_entries=6),
     }
 
     # Save session to global sessions dict
@@ -160,9 +162,13 @@ async def audio_text(body: AudioTextRequest):
             "reason": "Audio analysis is disabled for this session",
         }
 
-    safety_analysis_response: SafetyAnalysisResult = safety_analysis_client.analyze_transcript(body.text)
+    print(f'Body text: {body.text}')
+    session["transcript"].add_entry(body.text)
+    transcript_text = session["transcript"].get_entries()
+    print(f'Transcript text: {transcript_text}')
+    safety_analysis_response: SafetyAnalysisResult = safety_analysis_client.analyze_transcript(transcript_text)
     # result = analyze_text(body.text)  # fallback could be used here if LLM fails
-
+    print(f'Safety analysis response: {safety_analysis_response}')
     # Map danger_level to simple risk labels (example: >=7 is DANGER)
     if safety_analysis_response.danger_level >= 7:
         session["risk"] = "DANGER"
@@ -179,6 +185,7 @@ async def audio_text(body: AudioTextRequest):
     return {
         "risk": session["risk"],
         "reason": safety_analysis_response.summary,
+        "risk-score": safety_analysis_response.danger_level
     }
 
 
