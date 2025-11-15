@@ -24,6 +24,8 @@ from .notifications import add_notification
 
 from .llama_client import LlamaBackend
 
+from .reverse_geocode import reverse_geocode
+
 # ---------------------------------------------------------
 # WalkGuardianAI - backend MVP (in-memory, keyword-based)
 # ---------------------------------------------------------
@@ -320,3 +322,11 @@ async def stop_session(body: StopSessionRequest):
         "status": "FINISHED",
         "risk": state.current_session["risk"],
     }
+
+@app.get("/api/reverse-geocode")
+async def reverse_geocode_endpoint(lat: float, lon: float):
+    """
+    Proxy endpoint for reverse geocoding coordinates via Nominatim.
+    Called by the React frontend instead of hitting Nominatim directly.
+    """
+    return await reverse_geocode_external(lat=lat, lon=lon)
