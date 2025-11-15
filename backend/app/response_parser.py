@@ -1,12 +1,6 @@
 import re
 from dataclasses import dataclass
-
-@dataclass
-class SafetyAnalysisResult:
-    danger_level: int
-    danger_type: str
-    summary: str
-    recommended_action: str
+from .schemas import SafetyAnalysisResult
 
 def parse_model_response(response_text: str) -> SafetyAnalysisResult:
     """

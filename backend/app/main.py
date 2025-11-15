@@ -15,14 +15,14 @@ from .schemas import (
     Notification,
     SessionStatusResponse,
     NotificationsResponse,
-    UserInfo
+    UserInfo,
+    SafetyAnalysisResult
 )
 
 from .analysis import analyze_text
 from .notifications import add_notification
 
 from .llama_client import LlamaBackend
-from .response_parser import SafetyAnalysisResult
 
 # ---------------------------------------------------------
 # WalkGuardianAI - backend MVP (in-memory, keyword-based)

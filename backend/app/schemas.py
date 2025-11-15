@@ -61,3 +61,10 @@ class SessionStatusResponse(BaseModel):
 
 class NotificationsResponse(BaseModel):
     notifications: List[Notification]
+
+@dataclass
+class SafetyAnalysisResult:
+    danger_level: int
+    danger_type: str
+    summary: str
+    recommended_action: str
