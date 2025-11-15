@@ -52,7 +52,7 @@ async def start_session(body: StartSessionRequest):
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
 
-    current_session = {
+    state.current_session = {
         "id": session_id,
         "is_active": True,
         "created_at": now,
@@ -177,18 +177,18 @@ def get_status(session_id: str):
     Get current status of the safety session.
     Frontend can poll this to display current risk, user info and locations.
     """
-    if current_session is None:
+    if state.current_session is None:
         raise HTTPException(status_code=404, detail="No active session")
 
-    if current_session["id"] != session_id:
+    if state.current_session["id"] != session_id:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    user_data = current_session.get("user", {})
+    user_data = state.current_session.get("user", {})
 
     return SessionStatusResponse(
-        session_id=current_session["id"],
-        is_active=current_session["is_active"],
-        risk=current_session["risk"],
+        session_id=state.current_session["id"],
+        is_active=state.current_session["is_active"],
+        risk=state.current_session["risk"],
         user=UserInfo(
             first_name=user_data.get("first_name", ""),
             last_name=user_data.get("last_name", ""),
@@ -198,17 +198,17 @@ def get_status(session_id: str):
             medications=user_data.get("medications"),
         ),
         start_location=Location(
-            lat=current_session["start_location"]["lat"],
-            lng=current_session["start_location"]["lng"],
+            lat=state.current_session["start_location"]["lat"],
+            lng=state.current_session["start_location"]["lng"],
         ),
         current_location=Location(
-            lat=current_session["current_location"]["lat"],
-            lng=current_session["current_location"]["lng"],
+            lat=state.current_session["current_location"]["lat"],
+            lng=state.current_session["current_location"]["lng"],
         )
-        if current_session.get("current_location")
+        if state.current_session.get("current_location")
         else None,
-        destination=current_session["destination"],
-        audio_enabled=current_session["audio_enabled"],
+        destination=state.current_session["destination"],
+        audio_enabled=state.current_session["audio_enabled"],
     )
 
 
