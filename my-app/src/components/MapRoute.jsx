@@ -114,7 +114,7 @@ export default function MapRoute({ address, onBack }) {
       } catch (err) {
         // If location fails, just log it; don't break the loop
         console.debug('Failed to update location', err)
-        console.log('AN - Error location')
+        console.log('AN - Error location', err)
       }
     }
     console.log('AN - End location')
