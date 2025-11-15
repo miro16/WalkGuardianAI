@@ -18,3 +18,15 @@ class   LlamaBackend:
         )
 
         return parse_model_response(response.completion_message.content)
+
+    def query_model(self, message: str) -> str:
+        """
+        Sends the transcript + prompt to the Llama Stack model.
+        Returns the raw model response.
+        """
+        response = self.client.inference.chat_completion(
+            model_id="granite-40-h-1b",
+            messages=[{"role": "system", "content": self.prompt}, {"role": "user", "content": message}],
+        )
+
+        return response.completion_message.content
