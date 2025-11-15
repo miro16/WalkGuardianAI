@@ -1,0 +1,62 @@
+apiVersion: llamastack.io/v1alpha1
+kind: LlamaStackDistribution
+metadata:
+  name: lsd-llama-inference-only
+  namespace: walkguardianai-llm
+spec:
+  replicas: 1
+  server:
+    containerSpec:
+      name: llama-stack
+      port: 8321
+      resources:
+        requests:
+          cpu: "250m"
+          memory: "500Mi"
+        limits:
+          cpu: 4
+          memory: "12Gi"
+      env:
+        - name: LLAMA_STACK_AUTH_TYPE
+          value: "token"
+        - name: LLAMA_STACK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llama-stack-auth-secret
+              key: LLAMA_STACK_API_KEY
+
+        - name: INFERENCE_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: llama-stack-inference-model-secret
+              key: INFERENCE_MODEL
+
+        - name: VLLM_MAX_TOKENS
+          value: "4096"
+
+        - name: VLLM_URL
+          valueFrom:
+            secretKeyRef:
+              name: llama-stack-inference-model-secret
+              key: VLLM_URL
+
+        - name: VLLM_TLS_VERIFY
+          valueFrom:
+            secretKeyRef:
+              name: llama-stack-inference-model-secret
+              key: VLLM_TLS_VERIFY
+
+        - name: VLLM_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: llama-stack-inference-model-secret
+              key: VLLM_API_TOKEN
+  
+        - name: MILVUS_DB_PATH
+          value: "/opt/app-root/src/.llama/distributions/rh/milvus.db"
+
+        - name: FMS_ORCHESTRATOR_URL
+          value: "http://localhost:1"
+
+    distribution:
+      name: rh-dev
