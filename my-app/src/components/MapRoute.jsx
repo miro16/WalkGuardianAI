@@ -66,6 +66,7 @@ export default function MapRoute({ address, onBack }) {
     const sendTick = async () => {
       if (!sessionId) return
 
+      console.log('AN - Start audio-text')
       // 1) Define sender that reads the latest transcript value from ref
       const text = (transcriptRef.current || '').trim()
       if (text) {
@@ -91,8 +92,10 @@ export default function MapRoute({ address, onBack }) {
           setTranscript('')
         }
       }
+      console.log('AN - End audio-text')
 
       // 2) Send current coordinates to /api/session/location
+      console.log('AN - Start location')
       try {
         const pos = await getCurrentPosition()
         lat = pos.coords.latitude
@@ -111,8 +114,10 @@ export default function MapRoute({ address, onBack }) {
       } catch (err) {
         // If location fails, just log it; don't break the loop
         console.debug('Failed to update location', err)
+        console.log('AN - Error location')
       }
     }
+    console.log('AN - End location')
 
     // Start interval
     intervalRef.current = setInterval(sendTick, 10000)
