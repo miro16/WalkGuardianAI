@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict
 
-# In-memory session state (only one active session for MVP)
-current_session: Optional[dict] = None
+# In-memory sessions: many sessions by session_id
+sessions: Dict[str, dict] = {}

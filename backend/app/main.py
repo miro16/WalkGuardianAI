@@ -17,32 +17,30 @@ from .schemas import (
     SessionStatusResponse,
     NotificationsResponse,
     UserInfo,
-    SafetyAnalysisResult
+    SafetyAnalysisResult,
 )
 
 from .analysis import analyze_text
 from .notifications import add_notification
-
 from .llama_client import LlamaBackend
 
-from .reverse_geocode import reverse_geocode
-
 # ---------------------------------------------------------
-# WalkGuardianAI - backend MVP (in-memory, keyword-based)
+# WalkGuardianAI - backend MVP (in-memory, multi-session)
 # ---------------------------------------------------------
 
 app = FastAPI(title="WalkGuardianAI Backend V0")
-# Load safety analysis prompt
 
-PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_analysis_prompt.txt")
-
+# Load safety analysis prompt from external file
+PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_prompt.txt")
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     prompt = f.read()
 
+# Initialize Llama Stack client
 safety_analysis_client = LlamaBackend(
     base_url="http://lsd-llama-inference-only-service-walkguardianai-llm.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com",
-    prompt=prompt
+    prompt=prompt,
 )
+
 
 # ---------------------------------------------------------
 # Health check
@@ -64,19 +62,17 @@ def health_check():
 async def start_session(body: StartSessionRequest):
     """
     Start a new safety session for WalkGuardianAI.
-    For MVP we keep only one active session in memory.
-    If there was an existing session, it will be replaced.
+    Now supports multiple sessions in memory (keyed by session_id).
     """
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
 
-    state.current_session = {
+    session = {
         "id": session_id,
         "is_active": True,
         "created_at": now,
         "updated_at": now,
-
-        # NEW: user info for this session
+        # user info for this session
         "user": {
             "first_name": body.first_name,
             "last_name": body.last_name,
@@ -85,7 +81,6 @@ async def start_session(body: StartSessionRequest):
             "allergies": body.allergies,
             "medications": body.medications,
         },
-
         "start_location": {
             "lat": body.start_location.lat,
             "lng": body.start_location.lng,
@@ -104,11 +99,15 @@ async def start_session(body: StartSessionRequest):
         "notifications": [],
     }
 
+    # Save session to global sessions dict
+    state.sessions[session_id] = session
+
     # Simulate notification to the trusted contact
     user_label = f"{body.first_name} {body.last_name}"
     age_label = f", age {body.age}" if body.age is not None else ""
 
     await add_notification(
+        session_id,
         "SESSION_STARTED",
         f"{user_label}{age_label} started a walk towards '{body.destination}'.",
     )
@@ -126,26 +125,21 @@ def update_location(body: LocationUpdateRequest):
     Update current location of the active session.
     Called every ~5 seconds from the frontend.
     """
-    if state.current_session is None:
-        raise HTTPException(status_code=404, detail="No active session")
-
-    if state.current_session["id"] != body.session_id:
+    session = state.sessions.get(body.session_id)
+    if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    state.current_session["current_location"] = {
+    session["current_location"] = {
         "lat": body.lat,
         "lng": body.lng,
     }
-    state.current_session["updated_at"] = (
+    session["updated_at"] = (
         body.timestamp or datetime.now(timezone.utc).isoformat()
     )
 
-    # For now we do not do motion-based risk analysis in MVP.
-    # Later we can add sudden stop / sudden speedup detection here.
-
     return {
-        "status": "ACTIVE" if state.current_session["is_active"] else "FINISHED",
-        "risk": state.current_session["risk"],
+        "status": "ACTIVE" if session["is_active"] else "FINISHED",
+        "risk": session["risk"],
     }
 
 
@@ -153,38 +147,36 @@ def update_location(body: LocationUpdateRequest):
 async def audio_text(body: AudioTextRequest):
     """
     Receive a piece of transcribed audio for the current session.
-    Analyze it with a simple keyword-based analyzer.
-    If danger is detected, mark the session as DANGER and add a notification.
+    Analyze it with LLM; keyword-based analyzer can be used as a fallback if needed.
     """
-    if state.current_session is None:
-        raise HTTPException(status_code=404, detail="No active session")
-
-    if state.current_session["id"] != body.session_id:
+    session = state.sessions.get(body.session_id)
+    if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    if not state.current_session["audio_enabled"]:
+    if not session["audio_enabled"]:
         return {
-            "risk": state.current_session["risk"],
+            "risk": session["risk"],
             "reason": "Audio analysis is disabled for this session",
         }
 
-    safety_analysis_response = safety_analysis_client.analyze_transcript(body.text)
-    #result = analyze_text(body.text)
+    safety_analysis_response: SafetyAnalysisResult = safety_analysis_client.analyze_transcript(body.text)
+    # result = analyze_text(body.text)  # fallback could be used here if LLM fails
 
     # Map danger_level to simple risk labels (example: >=7 is DANGER)
     if safety_analysis_response.danger_level >= 7:
-        state.current_session["risk"] = "DANGER"
+        session["risk"] = "DANGER"
         await add_notification(
+            body.session_id,
             "DANGER_AUDIO",
             f"Potential danger detected in conversation: {safety_analysis_response.summary}",
         )
     else:
         # Only downgrade to SAFE if session was SAFE before
-        if state.current_session.get("risk", "SAFE") == "SAFE":
-            state.current_session["risk"] = "SAFE"
+        if session.get("risk", "SAFE") == "SAFE":
+            session["risk"] = "SAFE"
 
     return {
-        "risk": state.current_session["risk"],
+        "risk": session["risk"],
         "reason": safety_analysis_response.summary,
     }
 
@@ -195,18 +187,16 @@ def get_status(session_id: str):
     Get current status of the safety session.
     Frontend can poll this to display current risk, user info and locations.
     """
-    if state.current_session is None:
-        raise HTTPException(status_code=404, detail="No active session")
-
-    if state.current_session["id"] != session_id:
+    session = state.sessions.get(session_id)
+    if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    user_data = state.current_session.get("user", {})
+    user_data = session.get("user", {})
 
     return SessionStatusResponse(
-        session_id=state.current_session["id"],
-        is_active=state.current_session["is_active"],
-        risk=state.current_session["risk"],
+        session_id=session["id"],
+        is_active=session["is_active"],
+        risk=session["risk"],
         user=UserInfo(
             first_name=user_data.get("first_name", ""),
             last_name=user_data.get("last_name", ""),
@@ -216,30 +206,28 @@ def get_status(session_id: str):
             medications=user_data.get("medications"),
         ),
         start_location=Location(
-            lat=state.current_session["start_location"]["lat"],
-            lng=state.current_session["start_location"]["lng"],
+            lat=session["start_location"]["lat"],
+            lng=session["start_location"]["lng"],
         ),
         current_location=Location(
-            lat=state.current_session["current_location"]["lat"],
-            lng=state.current_session["current_location"]["lng"],
+            lat=session["current_location"]["lat"],
+            lng=session["current_location"]["lng"],
         )
-        if state.current_session.get("current_location")
+        if session.get("current_location")
         else None,
-        destination=state.current_session["destination"],
-        audio_enabled=state.current_session["audio_enabled"],
+        destination=session["destination"],
+        audio_enabled=session["audio_enabled"],
     )
 
 
 @app.get("/api/session/notifications", response_model=NotificationsResponse)
 def get_notifications(session_id: str):
     """
-    Return all notifications generated for the current session.
+    Return all notifications generated for the given session.
     This simulates what would be sent to the trusted contact.
     """
-    if state.current_session is None:
-        raise HTTPException(status_code=404, detail="No active session")
-
-    if state.current_session["id"] != session_id:
+    session = state.sessions.get(session_id)
+    if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
     notifications = [
@@ -248,7 +236,7 @@ def get_notifications(session_id: str):
             message=n["message"],
             timestamp=n["timestamp"],
         )
-        for n in state.current_session.get("notifications", [])
+        for n in session.get("notifications", [])
     ]
 
     return NotificationsResponse(notifications=notifications)
@@ -260,39 +248,30 @@ async def stop_session(body: StopSessionRequest):
     Stop the current safety session.
     Marks the session as not active and adds a notification.
     """
-    if state.current_session is None:
-        raise HTTPException(status_code=404, detail="No active session")
-
-    if state.current_session["id"] != body.session_id:
+    session = state.sessions.get(body.session_id)
+    if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    state.current_session["is_active"] = False
-    state.current_session["updated_at"] = datetime.now(timezone.utc).isoformat()
+    session["is_active"] = False
+    session["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    user = state.current_session.get("user", {})
+    user = session.get("user", {})
     first_name = user.get("first_name", "")
     last_name = user.get("last_name", "")
     user_label = f"{first_name} {last_name}".strip() or "User"
     age = user.get("age")
     age_label = f", age {age}" if age is not None else ""
 
-    destination = state.current_session.get("destination", "unknown destination")
+    destination = session.get("destination", "unknown destination")
 
     await add_notification(
+        body.session_id,
         "SESSION_STOPPED",
         f"{user_label}{age_label} stopped a walk towards '{destination}'.",
     )
 
     return {
-        "session_id": state.current_session["id"],
+        "session_id": session["id"],
         "status": "FINISHED",
-        "risk": state.current_session["risk"],
+        "risk": session["risk"],
     }
-
-@app.get("/api/reverse-geocode")
-async def reverse_geocode_endpoint(lat: float, lon: float):
-    """
-    Proxy endpoint for reverse geocoding coordinates via Nominatim.
-    Called by the React frontend instead of hitting Nominatim directly.
-    """
-    return await reverse_geocode(lat=lat, lon=lon)
