@@ -301,9 +301,18 @@ async def stop_session(body: StopSessionRequest):
     state.current_session["is_active"] = False
     state.current_session["updated_at"] = datetime.now(timezone.utc).isoformat()
 
+    user = state.current_session.get("user", {})
+    first_name = user.get("first_name", "")
+    last_name = user.get("last_name", "")
+    user_label = f"{first_name} {last_name}".strip() or "User"
+    age = user.get("age")
+    age_label = f", age {age}" if age is not None else ""
+
+    destination = state.current_session.get("destination", "unknown destination")
+
     await add_notification(
         "SESSION_STOPPED",
-         f"{user_label}{age_label} stopped a walk towards '{body.destination}'.",
+        f"{user_label}{age_label} stopped a walk towards '{destination}'.",
     )
 
     return {
