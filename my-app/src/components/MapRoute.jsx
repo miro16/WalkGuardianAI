@@ -66,7 +66,6 @@ export default function MapRoute({ address, onBack }) {
     const sendTick = async () => {
       if (!sessionId) return
 
-      console.log('AN - Start audio-text')
       // 1) Define sender that reads the latest transcript value from ref
       const text = (transcriptRef.current || '').trim()
       if (text) {
@@ -92,16 +91,13 @@ export default function MapRoute({ address, onBack }) {
           setTranscript('')
         }
       }
-      console.log('AN - End audio-text')
 
       // 2) Send current coordinates to /api/session/location
-      console.log('AN - Start location')
       try {
         const pos = await getCurrentPosition()
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
 
-        console.log('AN - Current pos', pos)
 
         await fetch('/api/api/session/location', {
           method: 'POST',
@@ -116,10 +112,8 @@ export default function MapRoute({ address, onBack }) {
       } catch (err) {
         // If location fails, just log it; don't break the loop
         console.debug('Failed to update location', err)
-        console.log('AN - Error location', err)
       }
     }
-    console.log('AN - End location')
 
     // Start interval
     intervalRef.current = setInterval(sendTick, 10000)
@@ -176,10 +170,16 @@ export default function MapRoute({ address, onBack }) {
     }
 
     recognition.onerror = (event) => {
+      if (event.error === 'no-speech') {
+        console.warn('No speech detected, continuing to listen...')
+        return
+      }
+
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
     }
 
+  
     recognition.onend = () => {
       setIsListening(false)
     }
