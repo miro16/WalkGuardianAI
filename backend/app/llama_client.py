@@ -11,7 +11,7 @@ class   LlamaBackend:
         Sends the transcript + prompt to the Llama Stack model.
         Returns the raw model response.
         """
-        response = self.client.inference.chat.create(
+        response = self.client.inference.chat_completion(
             model=self.model,
             messages=[{"role": "system", "content": self.prompt}, {"role": "user", "content": transcript}],
         )
