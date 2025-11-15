@@ -23,6 +23,11 @@ export default function UserData({ onUserDataSubmit, onSkip }) {
     e.preventDefault()
     const hasAnyData = Object.values(formData).some(v => String(v).trim() !== '')
     if (!hasAnyData) return
+    try {
+      localStorage.setItem('wg_user_data', JSON.stringify(formData))
+    } catch {
+      /* ignore storage failure */
+    }
     onUserDataSubmit(formData)
   }
 
@@ -127,7 +132,14 @@ export default function UserData({ onUserDataSubmit, onSkip }) {
             </button>
             <button
               type="button"
-              onClick={onSkip}
+              onClick={() => {
+                try {
+                  localStorage.removeItem('wg_user_data')
+                } catch {
+                  /* ignore */
+                }
+                onSkip()
+              }}
               className="skip-button"
             >
               Skip

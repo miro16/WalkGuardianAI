@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './AddressSelector.css'
 
 export default function AddressSelector({ onAddressSelect, onBack }) {
@@ -7,9 +7,8 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
   const [streetNumber, setStreetNumber] = useState('')
   const [channel, setChannel] = useState('Discord')
   const [guardian, setGuardian] = useState('')
-  const [currentLocation, setCurrentLocation] = useState(null)
-  const [locationError, setLocationError] = useState(null)
-  const [resolvedAddress, setResolvedAddress] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const isComplete = city.trim() && street.trim() && streetNumber.trim()
 
@@ -22,70 +21,86 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
     return parts.join(', ')
   })()
 
-  const handleStart = () => {
-    if (isComplete) {
-      onAddressSelect(`${city}, ${street}, ${streetNumber}`)
+  const handleStart = async () => {
+    if (!isComplete) return
+    setLoading(true)
+    setError('')
+
+    const destinationAddress = `${city}, ${street}, ${streetNumber}`
+
+    const getCurrentPosition = () =>
+      new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          reject(new Error('Geolocation not supported by browser'))
+          return
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(pos),
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        )
+      })
+
+    let lat = 0
+    let lng = 0
+    try {
+      const pos = await getCurrentPosition()
+      lat = pos.coords.latitude
+      lng = pos.coords.longitude
+    } catch (e) {
+      setError(
+        e?.message || 'Cannot get location. Allow location access and try again.'
+      )
+      // We still continue with 0,0 as a fallback for MVP
+    }
+
+    const storedUser = (() => {
+      try {
+        const raw = localStorage.getItem('wg_user_data')
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+
+    const contactType = channel === 'Discord' ? 'discord' : 'email'
+
+    const payload = {
+      start_location: { lat, lng },
+      destination: destinationAddress,
+      contact: { type: contactType, value: guardian || '' },
+      audio_enabled: true,
+      // Extra field with user data; backend will ignore unknown fields
+      user_profile: storedUser
+    }
+
+    try {
+      const resp = await fetch('/api/api/session/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (!resp.ok) {
+        const msg = await resp.text()
+        throw new Error(msg || 'Failed to start session')
+      }
+      const data = await resp.json()
+      try {
+        localStorage.setItem('wg_session', JSON.stringify(data))
+      } catch {
+        /* ignore storage failure */
+      }
+      // Keep original callback contract
+      onAddressSelect(destinationAddress)
+    } catch (e) {
+      setError(e?.message || 'Unexpected error')
+    } finally {
+      setLoading(false)
     }
   }
 
   
 
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      // Defer setState to avoid sync state set in render phase
-      setTimeout(() => setLocationError('Geolocation not supported by browser'), 0)
-      return
-    }
-
-    let mounted = true
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (!mounted) return
-        const { latitude, longitude } = pos.coords
-        setCurrentLocation({ lat: latitude, lng: longitude })
-        setLocationError(null)
-      },
-      (err) => {
-        if (!mounted) return
-        setLocationError(err.message)
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    )
-
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  // Reverse geocode coordinates to a human-readable address
-  useEffect(() => {
-    let aborted = false
-    async function reverseGeocode() {
-      if (!currentLocation) return
-      try {
-        const { lat, lng } = currentLocation
-        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' } })
-        if (!res.ok) throw new Error('Reverse geocoding failed')
-        const data = await res.json()
-        if (aborted) return
-        const a = data.address || {}
-        const city = a.city || a.town || a.village || a.hamlet || a.municipality || a.locality || ''
-        const street = a.road || a.pedestrian || a.footway || a.path || ''
-        const number = a.house_number || ''
-        const parts = []
-        if (city) parts.push(city)
-        if (street) parts.push(street)
-        if (number) parts.push(number)
-        const composed = parts.join(', ')
-        setResolvedAddress(composed || data.display_name || null)
-      } catch {
-        if (!aborted) setResolvedAddress(null)
-      }
-    }
-    reverseGeocode()
-    return () => { aborted = true }
-  }, [currentLocation])
 
   return (
     <div className="address-container">
@@ -105,17 +120,12 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
             )}
           </div>
         )}
-        <div className="current-location">
-          {locationError ? (
-            <p className="location-error">⚠️ {locationError}</p>
-          ) : resolvedAddress ? (
-            <p className="location-text">📡 Your location: {resolvedAddress}</p>
-          ) : currentLocation ? (
-            <p className="location-placeholder">Resolving your address…</p>
-          ) : (
-            <p className="location-placeholder">Locating your position…</p>
-          )}
-        </div>
+        {error && (
+          <div className="address-preview" style={{ color: '#b00020' }}>
+            <p className="address-preview-text">{error}</p>
+          </div>
+        )}
+        {/* Current location UI removed as requested */}
         
         <div className="form-group">
           <label htmlFor="city">City:</label>
@@ -180,10 +190,10 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
 
         <button
           onClick={handleStart}
-          disabled={!isComplete}
+          disabled={!isComplete || loading}
           className="start-button"
         >
-          Start
+          {loading ? 'Starting…' : 'Start'}
         </button>
       </div>
     </div>
