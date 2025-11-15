@@ -17,7 +17,7 @@ class TranscriptStore:
 
     def get_entries(self):
         with self.lock:
-            return "\n".join(self.entries)
+            return "\n".join(self.buffer)
 
     def clear(self):
         with self.lock:
