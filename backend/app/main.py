@@ -34,22 +34,22 @@ app = FastAPI(title="WalkGuardianAI Backend V0")
 
 # Load safety analysis prompt from external file
 PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_analysis_prompt.txt")
-PROMPT_PATH2 = os.path.join(os.path.dirname(__file__), "prompts", "medical_alert_prompt.txt")
+#PROMPT_PATH2 = os.path.join(os.path.dirname(__file__), "prompts", "medical_alert_prompt.txt")
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     risk_analysis_prompt = f.read()
 
-with open(PROMPT_PATH2, "r", encoding="utf-8") as f:
-    medical_alert_prompt = f.read()
+#with open(PROMPT_PATH2, "r", encoding="utf-8") as f:
+#    medical_alert_prompt = f.read()
 
 # Initialize Llama Stack client
 safety_analysis_client = LlamaBackend(
     base_url="http://lsd-llama-inference-only-service-walkguardianai-llm.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com",
     prompt=risk_analysis_prompt,
 )
-medical_alert_client = LlamaBackend(
-    base_url="http://lsd-llama-inference-only-service-walkguardianai-llm.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com",
-    prompt=medical_alert_prompt,
-)
+# medical_alert_client = LlamaBackend(
+#     base_url="http://lsd-llama-inference-only-service-walkguardianai-llm.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com",
+#     prompt=medical_alert_prompt,
+# )
 
 
 # ---------------------------------------------------------
@@ -183,15 +183,15 @@ async def audio_text(body: AudioTextRequest):
         session["risk"] = "DANGER"
         session["notification_sent"] = True
         if safety_analysis_response.danger_type == 'medical_distress' or safety_analysis_response.danger_type == 'mental_health_crisis':
-            query_message = f'''
-            reason: "{safety_analysis_response.summary}"
-            first_name: "{session["user"]["first_name"]}"
-            last_name: "{session["user"]["last_name"]}"
-            age: {session["user"]["age"] if session["user"]["age"] is not None else "null"}
-            diseases: "{session["user"]["diseases"]}"
-            allergies: "{session["user"]["allergies"]}"
-            medications: "{session["user"]["medications"]}"
-            '''.strip()
+            # query_message = f'''
+            # reason: "{safety_analysis_response.summary}"
+            # first_name: "{session["user"]["first_name"]}"
+            # last_name: "{session["user"]["last_name"]}"
+            # age: {session["user"]["age"] if session["user"]["age"] is not None else "null"}
+            # diseases: "{session["user"]["diseases"]}"
+            # allergies: "{session["user"]["allergies"]}"
+            # medications: "{session["user"]["medications"]}"
+            # '''.strip()
 
             #message = medical_alert_client.query_model(query_message)
             message = (
