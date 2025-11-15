@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import httpx
 
 from . import state
+from .reverse_geocode import reverse_geocode
 
 
 async def add_notification(session_id: str, notification_type: str, message: str) -> None:
