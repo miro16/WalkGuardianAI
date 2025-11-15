@@ -202,7 +202,7 @@ async def audio_text(body: AudioTextRequest):
                 f"- First name: {session['user']['first_name']}\n"
                 f"- Last name: {session['user']['last_name']}\n"
                 f"- Age: {session['user']['age']}\n"
-                f"- Location:\n"
+                f"- Location: https://www.google.com/maps?q={session['current_location']['lat']},{session['current_location']['lng']}\n"
                 f"  - Latitude: {session['current_location']['lat']}\n"
                 f"  - Longitude: {session['current_location']['lng']}\n\n"
                 f"- Known diseases: {session['user']['diseases']}\n"
