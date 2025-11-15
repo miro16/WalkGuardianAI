@@ -64,14 +64,14 @@ async def add_notification(session_id: str, notification_type: str, message: str
 
     # Discord webhook
     if notification_type == 'DANGER_MEDICAL':
-        topic = 'WalkGuardianAI/EmergencyMedicalServices'
+        topic = 'WalkGuardianAI-EmergencyMedicalServices'
         await send_ntfy_message(topic, message)
     elif contact.get("type") == "discord":
         webhook_url = contact.get("value")
         await send_discord_message(webhook_url, content)
     # ntfy topic (simple push via https://ntfy.sh/<topic>)
     elif contact.get("type") == "ntfy":
-        topic = f'WalkGuardianAI/{contact.get("value")}'
+        topic = f'WalkGuardianAI-{contact.get("value")}'
         await send_ntfy_message(topic, content)
 
 
