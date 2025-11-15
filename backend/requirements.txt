@@ -2,5 +2,6 @@ fastapi
 uvicorn[standard]
 pydantic
 httpx
+requests
 llama-stack-client==0.2.10
 fire
