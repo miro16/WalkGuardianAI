@@ -98,8 +98,8 @@ export default function MapRoute({ address, onBack }) {
       console.log('AN - Start location')
       try {
         const pos = await getCurrentPosition()
-        lat = pos.coords.latitude
-        lng = pos.coords.longitude
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
 
         console.log('AN - Current pos', pos)
 
