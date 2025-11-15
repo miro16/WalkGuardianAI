@@ -14,18 +14,19 @@ async def add_notification(session_id: str, notification_type: str, message: str
         # Session might have been removed or never existed – fail silently
         return
 
-    now = datetime.now(timezone.utc).isoformat()
-    human_time = now.strftime("%Y-%m-%d %H:%M:%S %Z")
+    now_utc = datetime.now(timezone.utc)                   # datetime object
+    now_iso = now_utc.isoformat()                          # string, for storage
+    human_time = now_utc.strftime("%Y-%m-%d %H:%M:%S %Z")  # string, pretty
 
     # 1) Store notification in memory
     session.setdefault("notifications", []).append(
         {
             "type": notification_type,
             "message": message,
-            "timestamp": now,
+            "timestamp": now_iso,
         }
     )
-    session["updated_at"] = now
+    session["updated_at"] = now_iso
 
     # 2) Send to external channel if configured
     contact = session.get("contact")
