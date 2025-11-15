@@ -25,30 +25,6 @@
   animation: slideUp 0.5s ease-out;
 }
 
-.backend-status {
-  text-align: center;
-  font-size: 0.85rem;
-  margin-bottom: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  display: inline-block;
-}
-
-.backend-status.online {
-  color: #0b6623;
-  background: rgba(11, 102, 35, 0.06);
-}
-
-.backend-status.offline {
-  color: #8b0000;
-  background: rgba(139, 0, 0, 0.04);
-}
-
-.backend-status.checking {
-  color: #444;
-  background: rgba(0,0,0,0.03);
-}
-
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -101,7 +77,7 @@
   -webkit-appearance: none;
   appearance: none;
   background-color: white;
-  color: #333;
+  color: #000;
 }
 
 .address-input:not(:placeholder-shown) {
@@ -145,6 +121,79 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.address-back-button {
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #e0e0e0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+  margin-bottom: 10px;
+}
+
+.address-back-button:active {
+  transform: scale(0.98);
+  background: #e7e7e7;
+}
+
+/* Location box */
+.current-location {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.location-text {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.location-placeholder {
+  margin: 0;
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.location-error {
+  margin: 0;
+  color: #8b0000;
+  font-size: 0.9rem;
+}
+
+/* Address preview */
+.address-preview {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.address-preview-text {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.address-preview-hint {
+  margin: 6px 0 0 0;
+  color: #999;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
 
 @media (max-width: 480px) {
   .address-container {
