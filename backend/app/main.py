@@ -179,7 +179,7 @@ async def audio_text(body: AudioTextRequest):
     # result = analyze_text(body.text)  # fallback could be used here if LLM fails
     print(f'Safety analysis response: {safety_analysis_response}')
     # Map danger_level to simple risk labels (example: >=7 is DANGER)
-    if safety_analysis_response.danger_level >= 7 and not session["notification_sent"]:
+    if safety_analysis_response.danger_level >= 6 and not session["notification_sent"]:
         session["risk"] = "DANGER"
         session["notification_sent"] = True
         if safety_analysis_response.danger_type == 'medical_distress' or safety_analysis_response.danger_type == 'mental_health_crisis':
@@ -202,7 +202,9 @@ async def audio_text(body: AudioTextRequest):
                 f"- First name: {session['user']['first_name']}\n"
                 f"- Last name: {session['user']['last_name']}\n"
                 f"- Age: {session['user']['age']}\n"
-                f"- Location: {session['user']['current_location']}\n"
+                f"- Location:\n"
+                f"  - Latitude: {session['current_location']['lat']}\n"
+                f"  - Longitude: {session['current_location']['lng']}\n\n"
                 f"- Known diseases: {session['user']['diseases']}\n"
                 f"- Allergies: {session['user']['allergies']}\n"
                 f"- Medications: {session['user']['medications']}\n\n"
