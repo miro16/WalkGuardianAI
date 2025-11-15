@@ -185,7 +185,9 @@ async def audio_text(body: AudioTextRequest):
     return {
         "risk": session["risk"],
         "reason": safety_analysis_response.summary,
-        "risk-score": safety_analysis_response.danger_level
+        "danger_level": safety_analysis_response.danger_level,
+        "danger_type": safety_analysis_response.danger_type,
+        "recommended_action": safety_analysis_response.recommended_action
     }
 
 
