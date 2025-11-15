@@ -12,7 +12,7 @@ class   LlamaBackend:
         Returns the raw model response.
         """
         response = self.client.inference.chat_completion(
-            model=self.model,
+            model_id="granite-40-h-1b",
             messages=[{"role": "system", "content": self.prompt}, {"role": "user", "content": transcript}],
         )
 
