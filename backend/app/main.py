@@ -295,4 +295,4 @@ async def reverse_geocode_endpoint(lat: float, lon: float):
     Proxy endpoint for reverse geocoding coordinates via Nominatim.
     Called by the React frontend instead of hitting Nominatim directly.
     """
-    return await reverse_geocode_external(lat=lat, lon=lon)
+    return await reverse_geocode(lat=lat, lon=lon)
