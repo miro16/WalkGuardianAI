@@ -70,8 +70,21 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
       destination: destinationAddress,
       contact: { type: contactType, value: guardian || '' },
       audio_enabled: true,
-      // Extra field with user data; backend will ignore unknown fields
-      user_profile: storedUser
+      // Flattened user data to match backend (snake_case)
+      first_name: storedUser?.firstName ?? '',
+      last_name: storedUser?.lastName ?? ''
+    }
+    if (storedUser?.age && !Number.isNaN(Number(storedUser.age))) {
+      payload.age = Number(storedUser.age)
+    }
+    if (storedUser?.diseases?.trim()) {
+      payload.diseases = storedUser.diseases.trim()
+    }
+    if (storedUser?.allergies?.trim()) {
+      payload.allergies = storedUser.allergies.trim()
+    }
+    if (storedUser?.medications?.trim()) {
+      payload.medications = storedUser.medications.trim()
     }
 
     try {
