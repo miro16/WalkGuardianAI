@@ -7,7 +7,7 @@ from . import state
 async def add_notification(notification_type: str, message: str) -> None:
     """
     Append a notification to the current session's notifications list.
-    For 'discord' contacts, also send a Discord message via webhook.
+    For 'discord' or 'ntfy' contacts, also send a message via the appropriate channel.
     """
     if state.current_session is None:
         return
@@ -24,13 +24,23 @@ async def add_notification(notification_type: str, message: str) -> None:
     )
     state.current_session["updated_at"] = now
 
-    # 2) Send to Discord if configured
+    # 2) Send to external channel if configured
     contact = state.current_session.get("contact")
-    if contact and contact.get("type") == "discord":
+    if not contact:
+        return
+
+    # Human-readable message used for all channels
+    content = f"[WalkGuardianAI] {notification_type} at {now}\n{message}"
+
+    # Discord webhook
+    if contact.get("type") == "discord":
         webhook_url = contact.get("value")
-        # Build a nice human-readable message in English
-        content = f"[WalkGuardianAI] {notification_type} at {now}\n{message}"
         await send_discord_message(webhook_url, content)
+
+    # ntfy topic (simple push via https://ntfy.sh/<topic>)
+    elif contact.get("type") == "ntfy":
+        topic = contact.get("value")
+        await send_ntfy_message(topic, content)
 
 
 async def send_discord_message(webhook_url: str, content: str) -> None:
@@ -49,3 +59,23 @@ async def send_discord_message(webhook_url: str, content: str) -> None:
                 )
     except Exception as e:
         print(f"[WalkGuardianAI] Error calling Discord webhook: {e}")
+
+
+async def send_ntfy_message(topic: str, content: str) -> None:
+    """
+    Send a simple notification to an ntfy topic.
+    The receiver can subscribe to https://ntfy.sh/<topic> in the mobile app.
+    """
+    url = f"https://ntfy.sh/{topic}"
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            # ntfy accepts plain text in the body as the message
+            response = await client.post(url, content=content)
+            if response.status_code >= 400:
+                print(
+                    f"[WalkGuardianAI] ntfy notification failed: "
+                    f"{response.status_code} {response.text}"
+                )
+    except Exception as e:
+        print(f"[WalkGuardianAI] Error sending ntfy notification: {e}")

@@ -8,7 +8,7 @@ class Location(BaseModel):
 
 
 class Contact(BaseModel):
-    type: Literal["phone", "email", "discord"]
+    type: Literal["phone", "email", "discord", "ntfy"]
     value: str
 
 class StartSessionRequest(BaseModel):

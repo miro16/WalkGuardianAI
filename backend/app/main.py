@@ -255,7 +255,7 @@ async def stop_session(body: StopSessionRequest):
 
     await add_notification(
         "SESSION_STOPPED",
-        "User stopped the walk.",
+         f"{user_label}{age_label} stopped a walk towards '{body.destination}'.",
     )
 
     return {
