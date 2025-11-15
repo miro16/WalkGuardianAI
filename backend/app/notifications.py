@@ -61,30 +61,6 @@ def _build_human_friendly_content(
     Compose a nice, human-readable notification string for Discord/ntfy.
     Uses markdown (supported by Discord and readable in ntfy).
     """
-    session = state.current_session or {}
-
-    # User info
-    user = session.get("user", {}) or {}
-    first_name = (user.get("first_name") or "").strip()
-    last_name = (user.get("last_name") or "").strip()
-    user_label = (f"{first_name} {last_name}".strip()) or "User"
-    age = user.get("age")
-    age_label = f" ({age} y/o)" if age is not None else ""
-
-    # Destination
-    destination = session.get("destination") or "Unknown destination"
-
-    # Location info & Google Maps link if we have coordinates
-    location_block = ""
-    current_location = session.get("current_location") or {}
-    lat = current_location.get("lat")
-    lng = current_location.get("lng")
-    if lat is not None and lng is not None:
-        maps_url = f"https://maps.google.com/?q={lat},{lng}"
-        location_block = (
-            f"\n• **Location:** {lat:.5f}, {lng:.5f}"
-            f"\n• **Map:** {maps_url}"
-        )
 
     # Pick an emoji based on event type
     if notification_type.startswith("DANGER"):
@@ -101,9 +77,6 @@ def _build_human_friendly_content(
         f"{emoji} **WalkGuardianAI Alert**\n"
         f"• **Event:** `{notification_type}`\n"
         f"• **Time:** {human_time}\n"
-        f"• **User:** {user_label}{age_label}\n"
-        f"• **Destination:** {destination}"
-        f"{location_block}\n"
         f"• **Details:** {message}"
     )
 
