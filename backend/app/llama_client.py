@@ -1,5 +1,6 @@
 from llama_stack_client import LlamaStackClient
-from .response_parser import parse_model_response, SafetyAnalysisResult
+from .response_parser import parse_model_response
+from .schemas import SafetyAnalysisResult
 
 class   LlamaBackend:
     def __init__(self, base_url: str, prompt: str):
