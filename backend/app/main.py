@@ -15,7 +15,9 @@ from .schemas import (
     Notification,
     SessionStatusResponse,
     NotificationsResponse,
+    UserInfo
 )
+
 from .analysis import analyze_text
 from .notifications import add_notification
 
