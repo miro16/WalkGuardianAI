@@ -9,6 +9,7 @@ export default function MapRoute({ address, onBack }) {
   const [locationError, setLocationError] = useState(null)
   const [backendStatus, setBackendStatus] = useState(null)
   const [checkingBackend, setCheckingBackend] = useState(false)
+  const [resolvedAddress, setResolvedAddress] = useState(null)
 
 
   useEffect(() => {
@@ -45,6 +46,36 @@ export default function MapRoute({ address, onBack }) {
       mounted = false
     }
   }, [])
+
+  // Reverse geocode current coordinates to human-readable address
+  useEffect(() => {
+    let aborted = false
+    async function reverseGeocode() {
+      if (!currentLocation) return
+      try {
+        const { lat, lng } = currentLocation
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } })
+        if (!res.ok) throw new Error('Reverse geocoding failed')
+        const data = await res.json()
+        if (aborted) return
+        const a = data.address || {}
+        const city = a.city || a.town || a.village || a.hamlet || a.municipality || a.locality || ''
+        const street = a.road || a.pedestrian || a.footway || a.path || ''
+        const number = a.house_number || ''
+        const parts = []
+        if (city) parts.push(city)
+        if (street) parts.push(street)
+        if (number) parts.push(number)
+        const composed = parts.join(', ')
+        setResolvedAddress(composed || data.display_name || null)
+      } catch {
+        if (!aborted) setResolvedAddress(null)
+      }
+    }
+    reverseGeocode()
+    return () => { aborted = true }
+  }, [currentLocation])
 
 
 
@@ -141,10 +172,12 @@ export default function MapRoute({ address, onBack }) {
         </button>
         <h1>My Route</h1>
         <div className="current-location">
-          {currentLocation ? (
-            <p className="location-text">📡 Your location: {currentLocation.lat.toFixed(5)}, {currentLocation.lng.toFixed(5)}</p>
-          ) : locationError ? (
+          {locationError ? (
             <p className="location-error">⚠️ {locationError}</p>
+          ) : resolvedAddress ? (
+            <p className="location-text">📡 Your location: {resolvedAddress}</p>
+          ) : currentLocation ? (
+            <p className="location-placeholder">Resolving your address…</p>
           ) : (
             <p className="location-placeholder">Locating your position…</p>
           )}
