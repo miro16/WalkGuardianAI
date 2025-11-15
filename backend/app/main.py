@@ -72,6 +72,7 @@ async def start_session(body: StartSessionRequest):
     session = {
         "id": session_id,
         "is_active": True,
+        "notification_sent": False,
         "created_at": now,
         "updated_at": now,
         # user info for this session
@@ -170,8 +171,9 @@ async def audio_text(body: AudioTextRequest):
     # result = analyze_text(body.text)  # fallback could be used here if LLM fails
     print(f'Safety analysis response: {safety_analysis_response}')
     # Map danger_level to simple risk labels (example: >=7 is DANGER)
-    if safety_analysis_response.danger_level >= 7:
+    if safety_analysis_response.danger_level >= 7 and not session["notification_sent"]:
         session["risk"] = "DANGER"
+        session["notification_sent"] = True
         await add_notification(
             body.session_id,
             "DANGER_AUDIO",
