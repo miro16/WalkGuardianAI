@@ -15,9 +15,11 @@ class TranscriptStore:
                 "text": text
             })
 
-    def get_entries(self):
-        with self.lock:
-            return "\n".join(self.buffer)
+    def get_entries(self) -> str:
+        return "\n".join(
+            f"[{item['timestamp']}] {item['text']}"
+            for item in self.buffer
+        )
 
     def clear(self):
         with self.lock:
