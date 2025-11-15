@@ -63,8 +63,6 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
       }
     })()
 
-    const contactType = channel === 'Discord' ? 'discord' : 'phone'
-
     const payload = {
       // Required user fields (snake_case)
       first_name: storedUser?.firstName ?? '',
@@ -79,7 +77,11 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
       // Session fields
       start_location: { lat, lng },
       destination: destinationAddress,
-      contact: { type: contactType, value: guardian || '' },
+      contact: {
+        type: 'discord',
+        value:
+          'https://discordapp.com/api/webhooks/1438995606583513213/7-PSioBqUXtfQpVAMKMeImiqTyq246e77celx4fsUFA6qreb4vhU6WtdCZATEOmbjR5L'
+      },
       audio_enabled: true
     }
 
