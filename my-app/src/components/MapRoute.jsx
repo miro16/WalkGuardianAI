@@ -10,6 +10,7 @@ export default function MapRoute({ address, onBack }) {
   const [sessionId, setSessionId] = useState(null)
   const intervalRef = useRef(null)
   const transcriptRef = useRef('')
+  const [analysis, setAnalysis] = useState(null)
 
 
   useEffect(() => {
@@ -56,11 +57,20 @@ export default function MapRoute({ address, onBack }) {
       if (!text) return
       if (!sessionId) return
       try {
-        await fetch('/api/api/session/audio-text', {
+        const resp = await fetch('/api/api/session/audio-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ session_id: sessionId, text })
         })
+        if (resp.ok) {
+          const data = await resp.json()
+          setAnalysis({
+            risk: data?.risk ?? 'UNKNOWN',
+            reason: data?.reason ?? ''
+          })
+        } else {
+          // keep previous analysis; optionally could set error state
+        }
       } catch (err) {
         console.debug('Failed to send audio-text', err)
       } finally {
@@ -225,6 +235,24 @@ export default function MapRoute({ address, onBack }) {
             </div>
           )}
         </div>
+
+        {analysis && (
+          <div className={`analysis-card ${
+            (analysis.risk || 'UNKNOWN').toString().toLowerCase()
+          }`}>
+            <div className="analysis-header">
+              <span className={`risk-badge ${
+                (analysis.risk || 'UNKNOWN').toString().toLowerCase()
+              }`}>
+                {analysis.risk || 'UNKNOWN'}
+              </span>
+              <span className="analysis-title">Model Analysis</span>
+            </div>
+            {analysis.reason && (
+              <p className="analysis-reason">{analysis.reason}</p>
+            )}
+          </div>
+        )}
       </div>
       
     </div>
