@@ -57,6 +57,17 @@ async def start_session(body: StartSessionRequest):
         "is_active": True,
         "created_at": now,
         "updated_at": now,
+
+        # NEW: user info for this session
+        "user": {
+            "first_name": body.first_name,
+            "last_name": body.last_name,
+            "age": body.age,
+            "diseases": body.diseases,
+            "allergies": body.allergies,
+            "medications": body.medications,
+        },
+
         "start_location": {
             "lat": body.start_location.lat,
             "lng": body.start_location.lng,
@@ -76,9 +87,12 @@ async def start_session(body: StartSessionRequest):
     }
 
     # Simulate notification to the trusted contact
+    user_label = f"{body.first_name} {body.last_name}"
+    age_label = f", age {body.age}" if body.age is not None else ""
+
     await add_notification(
         "SESSION_STARTED",
-        f"User started a walk towards '{body.destination}'.",
+        f"{user_label}{age_label} started a walk towards '{body.destination}'.",
     )
 
     return {
@@ -161,7 +175,7 @@ async def audio_text(body: AudioTextRequest):
 def get_status(session_id: str):
     """
     Get current status of the safety session.
-    Frontend can poll this to display current risk and locations.
+    Frontend can poll this to display current risk, user info and locations.
     """
     if state.current_session is None:
         raise HTTPException(status_code=404, detail="No active session")
@@ -169,10 +183,20 @@ def get_status(session_id: str):
     if state.current_session["id"] != session_id:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    user_data = state.current_session.get("user", {})
+
     return SessionStatusResponse(
         session_id=state.current_session["id"],
         is_active=state.current_session["is_active"],
         risk=state.current_session["risk"],
+        user=UserInfo(
+            first_name=user_data.get("first_name", ""),
+            last_name=user_data.get("last_name", ""),
+            age=user_data.get("age"),
+            diseases=user_data.get("diseases"),
+            allergies=user_data.get("allergies"),
+            medications=user_data.get("medications"),
+        ),
         start_location=Location(
             lat=state.current_session["start_location"]["lat"],
             lng=state.current_session["start_location"]["lng"],
