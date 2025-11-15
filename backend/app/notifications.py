@@ -60,6 +60,7 @@ def _build_human_friendly_content(
     notification_type: str,
     message: str,
     human_time: str,
+    location=None,
 ) -> str:
     """
     Compose a nice, human-readable notification string for Discord/ntfy.
