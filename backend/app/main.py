@@ -34,7 +34,7 @@ with open("prompts/safety_analysis_prompt.txt", "r") as f:
     prompt = f.read()
 # Initialize Llama Stack client
 safety_analysis_client = LlamaBackend(
-    base_url="http://llama-stack-service.default.svc.cluster.local:8080",
+    base_url="http://lsd-llama-inference-only-service-walkguardianai-llm.apps.cluster-pzdb5.pzdb5.sandbox5281.opentlc.com",
     prompt=prompt
 )
 
