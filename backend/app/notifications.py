@@ -4,28 +4,30 @@ import httpx
 from . import state
 
 
-async def add_notification(notification_type: str, message: str) -> None:
+async def add_notification(session_id: str, notification_type: str, message: str) -> None:
     """
-    Append a notification to the current session's notifications list.
+    Append a notification to the given session's notifications list.
     For 'discord' or 'ntfy' contacts, also send a message via the appropriate channel.
     """
-    if state.current_session is None:
+    session = state.sessions.get(session_id)
+    if session is None:
+        # Session might have been removed or never existed – fail silently
         return
 
     now = datetime.now(timezone.utc).isoformat()
 
     # 1) Store notification in memory
-    state.current_session["notifications"].append(
+    session.setdefault("notifications", []).append(
         {
             "type": notification_type,
             "message": message,
             "timestamp": now,
         }
     )
-    state.current_session["updated_at"] = now
+    session["updated_at"] = now
 
     # 2) Send to external channel if configured
-    contact = state.current_session.get("contact")
+    contact = session.get("contact")
     if not contact:
         return
 
