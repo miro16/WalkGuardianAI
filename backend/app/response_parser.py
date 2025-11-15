@@ -1,5 +1,4 @@
 import re
-from dataclasses import dataclass
 from .schemas import SafetyAnalysisResult
 
 def parse_model_response(response_text: str) -> SafetyAnalysisResult:

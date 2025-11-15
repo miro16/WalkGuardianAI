@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional, Literal, List
+from typing import Optional, Literal, Lis
+from dataclasses import dataclass
 
 
 class Location(BaseModel):
@@ -62,6 +63,7 @@ class SessionStatusResponse(BaseModel):
 class NotificationsResponse(BaseModel):
     notifications: List[Notification]
 
+@dataclass
 class SafetyAnalysisResult:
     danger_level: int
     danger_type: str
