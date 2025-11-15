@@ -101,6 +101,8 @@ export default function MapRoute({ address, onBack }) {
         lat = pos.coords.latitude
         lng = pos.coords.longitude
 
+        console.log('AN - Current pos', pos)
+
         await fetch('/api/api/session/location', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
