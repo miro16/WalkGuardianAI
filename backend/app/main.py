@@ -21,11 +21,22 @@ from .schemas import (
 from .analysis import analyze_text
 from .notifications import add_notification
 
+from .llama_client import LlamaBackend
+from .response_parser import SafetyAnalysisResult
+
 # ---------------------------------------------------------
 # WalkGuardianAI - backend MVP (in-memory, keyword-based)
 # ---------------------------------------------------------
 
 app = FastAPI(title="WalkGuardianAI Backend V0")
+# Load safety analysis prompt
+with open("prompts/safety_analysis_prompt.txt", "r") as f:
+    prompt = f.read()
+# Initialize Llama Stack client
+safety_analysis_client = LlamaBackend(
+    base_url="http://llama-stack-service.default.svc.cluster.local:8080",
+    prompt=prompt
+)
 
 
 # ---------------------------------------------------------
@@ -152,24 +163,24 @@ async def audio_text(body: AudioTextRequest):
             "reason": "Audio analysis is disabled for this session",
         }
 
-    result = analyze_text(body.text)
+    safety_analysis_response = safety_analysis_client.analyze_transcript(body.text)
+    #result = analyze_text(body.text)
 
-    # If the analyzer says DANGER, update session risk and notify contact
-    if result["risk"] == "DANGER":
+    # Map danger_level to simple risk labels (example: >=7 is DANGER)
+    if safety_analysis_response.danger_level >= 7:
         state.current_session["risk"] = "DANGER"
         await add_notification(
             "DANGER_AUDIO",
-            f"Potential danger detected in conversation: {result['reason']}",
+            f"Potential danger detected in conversation: {safety_analysis_response.summary}",
         )
     else:
         # Only downgrade to SAFE if session was SAFE before
-        # (once DANGER, we keep it as DANGER for MVP)
-        if state.current_session["risk"] == "SAFE":
+        if state.current_session.get("risk", "SAFE") == "SAFE":
             state.current_session["risk"] = "SAFE"
 
     return {
         "risk": state.current_session["risk"],
-        "reason": result["reason"],
+        "reason": safety_analysis_response.summary,
     }
 
 
