@@ -5,7 +5,8 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
   const [city, setCity] = useState('')
   const [street, setStreet] = useState('')
   const [streetNumber, setStreetNumber] = useState('')
-  const [backendStatus, setBackendStatus] = useState(null)
+  const [channel, setChannel] = useState('Discord')
+  const [guardian, setGuardian] = useState('')
   const [currentLocation, setCurrentLocation] = useState(null)
   const [locationError, setLocationError] = useState(null)
   const [resolvedAddress, setResolvedAddress] = useState(null)
@@ -27,32 +28,7 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
     }
   }
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function checkHealth() {
-      try {
-        const res = await fetch('walkguardianai-backend/health')
-        if (cancelled) return
-        if (res.ok) {
-          const data = await res.json()
-          setBackendStatus(data.status || 'ok')
-        } else {
-          setBackendStatus('unavailable')
-        }
-      } catch (err) {
-        if (cancelled) return
-        console.debug('Health check failed', err)
-        setBackendStatus('unreachable')
-      }
-    }
-
-    checkHealth()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -173,6 +149,31 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
             placeholder="e.g. 42/5"
             value={streetNumber}
             onChange={(e) => setStreetNumber(e.target.value)}
+            className="address-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="channel">Notification Channel:</label>
+          <select
+            id="channel"
+            value={channel}
+            onChange={(e) => setChannel(e.target.value)}
+            className="address-input"
+          >
+            <option value="Discord">Discord</option>
+            <option value="Notify">Notify</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="guardian">Guardian:</label>
+          <input
+            type="text"
+            id="guardian"
+            placeholder="e.g. username / contact"
+            value={guardian}
+            onChange={(e) => setGuardian(e.target.value)}
             className="address-input"
           />
         </div>
