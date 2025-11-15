@@ -41,9 +41,9 @@ export default function MapRoute({ address, onBack }) {
     transcriptRef.current = transcript
   }, [transcript])
 
-  // While listening, send transcript to backend every 10 seconds
+  // While listening, send transcript AND location to backend every 10 seconds
   useEffect(() => {
-    if (!isListening) {
+    if (!isListening || !sessionId) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
@@ -51,36 +51,70 @@ export default function MapRoute({ address, onBack }) {
       return
     }
 
-    // Define sender that reads the latest transcript value from ref
-    const sendTranscript = async () => {
-      const text = (transcriptRef.current || '').trim()
-      if (!text) return
+    const getCurrentPosition = () =>
+    new Promise((resolve, reject) => {
+      if (!('geolocation' in navigator)) {
+        return reject(new Error('Geolocation not supported by browser'))
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve(pos),
+        (err) => reject(err),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      )
+    })
+
+    const sendTick = async () => {
       if (!sessionId) return
+
+      // 1) Define sender that reads the latest transcript value from ref
+      const text = (transcriptRef.current || '').trim()
+      if (text) {
+        try {
+          const resp = await fetch('/api/api/session/audio-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, text })
+          })
+          if (resp.ok) {
+            const data = await resp.json()
+            setAnalysis({
+              risk: data?.risk ?? 'UNKNOWN',
+              reason: data?.reason ?? ''
+            })
+          } else {
+          // keep previous analysis; optionally could set error state
+          }
+        } catch (err) {
+          console.debug('Failed to send audio-text', err)
+        } finally {
+          // Clear displayed transcript after each send
+          setTranscript('')
+        }
+      }
+
+      // 2) Send current coordinates to /api/session/location
       try {
-        const resp = await fetch('/api/api/session/audio-text', {
+        const pos = await getCurrentPosition()
+        const { latitude: lat, longitude: lng } = pos.coords
+
+        await fetch('/api/api/session/location', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session_id: sessionId, text })
-        })
-        if (resp.ok) {
-          const data = await resp.json()
-          setAnalysis({
-            risk: data?.risk ?? 'UNKNOWN',
-            reason: data?.reason ?? ''
+          body: JSON.stringify({
+            session_id: sessionId,
+            lat,
+            lng,
+            timestamp: new Date().toISOString()
           })
-        } else {
-          // keep previous analysis; optionally could set error state
-        }
+        })
       } catch (err) {
-        console.debug('Failed to send audio-text', err)
-      } finally {
-        // Clear displayed transcript after each send
-        setTranscript('')
+        // If location fails, just log it; don't break the loop
+        console.debug('Failed to update location', err)
       }
     }
 
     // Start interval
-    intervalRef.current = setInterval(sendTranscript, 10000)
+    intervalRef.current = setInterval(sendTick, 10000)
 
     // Cleanup when listening stops or component unmounts
     return () => {
@@ -94,6 +128,11 @@ export default function MapRoute({ address, onBack }) {
 
 
   const handleStartListening = () => {
+    if (!sessionId) {
+      alert('No active session. Please go back and start a walk first.')
+      return
+    }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     
     if (!SpeechRecognition) {
