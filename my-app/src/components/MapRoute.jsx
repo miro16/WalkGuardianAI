@@ -205,13 +205,6 @@ export default function MapRoute({ address, onBack }) {
         </div>
         
         <div className="button-group">
-          <button 
-            className={`listen-button ${isListening ? 'listening' : ''}`}
-            onClick={isListening ? handleStopListening : handleStartListening}
-          >
-            {isListening ? '⏹️ Stop Recording' : '🚶 Start Walk'}
-          </button>
-          
           {transcript && (
             <button 
               className="clear-button"
@@ -253,6 +246,15 @@ export default function MapRoute({ address, onBack }) {
             )}
           </div>
         )}
+
+        {/* Floating bottom-centered Start/Stop button */}
+        <button
+          className={`listen-button fab ${isListening ? 'listening' : ''}`}
+          onClick={isListening ? handleStopListening : handleStartListening}
+          aria-label={isListening ? 'Stop Recording' : 'Start Walk'}
+        >
+          {isListening ? '⏹️ Stop' : '🚶 Start'}
+        </button>
       </div>
       
     </div>

@@ -192,6 +192,30 @@
   animation: pulse 1s infinite;
 }
 
+/* Floating circular Start/Stop button at bottom center */
+.listen-button.fab {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  transform: translateX(-50%);
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  z-index: 1000;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.2), 0 6px 12px rgba(0,0,0,0.12);
+  flex: none;
+}
+
+.listen-button.fab:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -323,6 +347,13 @@
   .listen-button {
     padding: 11px 14px;
     font-size: 0.9rem;
+  }
+
+  .listen-button.fab {
+    width: 78px;
+    height: 78px;
+    font-size: 0.95rem;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
   }
 
   .clear-button {
