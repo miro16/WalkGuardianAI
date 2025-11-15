@@ -193,7 +193,23 @@ async def audio_text(body: AudioTextRequest):
             medications: "{session["user"]["medications"]}"
             '''.strip()
 
-            message = medical_alert_client.query_model(query_message)
+            #message = medical_alert_client.query_model(query_message)
+            message = (
+                f"Hello, this is WalkGuardianAI, an automated safety-monitoring assistant. "
+                f"I am calling because the user I am monitoring appears to be in a high-risk situation.\n\n"
+                f"Reason for emergency: {safety_analysis_response.summary}\n\n"
+                f"User information:\n"
+                f"- First name: {session['user']['first_name']}\n"
+                f"- Last name: {session['user']['last_name']}\n"
+                f"- Age: {session['user']['age']}\n"
+                f"- Location: {session['user']['current_location']}\n"
+                f"- Known diseases: {session['user']['diseases']}\n"
+                f"- Allergies: {session['user']['allergies']}\n"
+                f"- Medications: {session['user']['medications']}\n\n"
+                f"I detected signs consistent with a potential medical or safety emergency and "
+                f"am requesting immediate assistance to the users location."
+            )
+
             await add_notification(
             body.session_id,
             "DANGER_MEDICAL",
