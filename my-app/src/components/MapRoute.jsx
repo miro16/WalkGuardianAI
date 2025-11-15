@@ -118,7 +118,7 @@ export default function MapRoute({ address, onBack }) {
   const handleCheckBackendHealth = async () => {
     setCheckingBackend(true)
     try {
-      const resp = await fetch('/walkguardianai-backend/health')
+      const resp = await fetch('/api/health')
       if (resp.ok) {
         const data = await resp.json()
         setBackendStatus(data.status || 'ok')
