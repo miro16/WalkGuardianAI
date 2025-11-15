@@ -33,11 +33,15 @@ async def add_notification(session_id: str, notification_type: str, message: str
     if not contact:
         return
 
+    # Take current_location if available, otherwise fall back to start_location
+    location = session.get("current_location") or session.get("start_location")
+
     # Human-readable message used for all channels
     content = _build_human_friendly_content(
         notification_type=notification_type,
         message=message,
         human_time=human_time,
+        location=location,
     )
     
 
@@ -72,11 +76,27 @@ def _build_human_friendly_content(
     else:
         emoji = "ℹ️"
 
+    # Optional location block
+    location_block = ""
+    if location is not None:
+        try:
+            lat = float(location["lat"])
+            lng = float(location["lng"])
+            maps_url = f"https://maps.google.com/?q={lat},{lng}"
+            location_block = (
+                f"• **Location:** {lat:.5f}, {lng:.5f}\n"
+                f"• **Map:** {maps_url}\n"
+            )
+        except (KeyError, TypeError, ValueError):
+            # If anything is missing or malformed, just skip location
+            location_block = ""
+
     # Final formatted content
     content = (
         f"{emoji} **WalkGuardianAI Alert**\n"
         f"• **Event:** `{notification_type}`\n"
         f"• **Time:** {human_time}\n"
+        f"{location_block}"
         f"• **Details:** {message}"
     )
 
