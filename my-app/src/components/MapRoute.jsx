@@ -7,16 +7,79 @@ export default function MapRoute({ address, onBack }) {
   const recognitionRef = useRef(null)
   const [backendStatus, setBackendStatus] = useState(null)
   const [checkingBackend, setCheckingBackend] = useState(false)
+  const [sessionId, setSessionId] = useState(null)
+  const intervalRef = useRef(null)
+  const transcriptRef = useRef('')
 
 
   useEffect(() => {
+    // Load session_id from localStorage if available
+    try {
+      const raw = localStorage.getItem('wg_session')
+      if (raw) {
+        const data = JSON.parse(raw)
+        if (data?.session_id) setSessionId(data.session_id)
+      }
+    } catch {
+      // ignore storage errors
+    }
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort()
       }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
     }
   }, [])
 
+  // Keep a ref with the latest transcript value for the interval callback
+  useEffect(() => {
+    transcriptRef.current = transcript
+  }, [transcript])
+
+  // While listening, send transcript to backend every 10 seconds
+  useEffect(() => {
+    if (!isListening) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      return
+    }
+
+    // Define sender that reads the latest transcript value from ref
+    const sendTranscript = async () => {
+      const text = (transcriptRef.current || '').trim()
+      if (!text) return
+      if (!sessionId) return
+      try {
+        await fetch('/api/api/session/audio-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, text })
+        })
+      } catch (err) {
+        console.debug('Failed to send audio-text', err)
+      } finally {
+        // Clear displayed transcript after each send
+        setTranscript('')
+      }
+    }
+
+    // Start interval
+    intervalRef.current = setInterval(sendTranscript, 10000)
+
+    // Cleanup when listening stops or component unmounts
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [isListening, sessionId])
 
 
 
@@ -80,6 +143,10 @@ export default function MapRoute({ address, onBack }) {
         console.error('Error stopping recognition:', error)
       }
     }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
     setIsListening(false)
   }
 
@@ -112,7 +179,6 @@ export default function MapRoute({ address, onBack }) {
           ← Back
         </button>
         <h1>My Route</h1>
-        {/* Current location UI removed as requested */}
         <div className="address-info">
           <p className="address-text">📍 {address}</p>
         </div>
