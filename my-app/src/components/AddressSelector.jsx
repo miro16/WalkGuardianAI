@@ -12,7 +12,6 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
 
   const isComplete = city.trim() && street.trim() && streetNumber.trim()
 
-  // Compose a human-friendly preview in format: City, Street, Number
   const previewAddress = (() => {
     const parts = []
     if (city.trim()) parts.push(city.trim())
@@ -72,7 +71,7 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
           }
         : {
             type: 'ntfy',
-            value: 'Bartek'
+            value: guardian || ''
           }
 
     const payload = {
