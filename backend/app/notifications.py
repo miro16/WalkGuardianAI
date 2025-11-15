@@ -36,12 +36,28 @@ async def add_notification(session_id: str, notification_type: str, message: str
     # Take current_location if available, otherwise fall back to start_location
     location = session.get("current_location") or session.get("start_location")
 
+     # Reverse-geocode to a human-readable address (best effort only)
+    address = None
+    if location is not None:
+        try:
+            lat = float(location["lat"])
+            lng = float(location["lng"])
+            geo_data = await reverse_geocode(lat=lat, lon=lng)
+            # Nominatim returns "display_name" which is a nicely formatted address string
+            address = geo_data.get("display_name")
+        except Exception as e:
+            # Do not crash notifications if reverse geocoding fails
+            print(f"[WalkGuardianAI] reverse_geocode failed: {e}")
+            address = None   
+
+
     # Human-readable message used for all channels
     content = _build_human_friendly_content(
         notification_type=notification_type,
         message=message,
         human_time=human_time,
         location=location,
+        address=address,
     )
     
 
@@ -61,6 +77,7 @@ def _build_human_friendly_content(
     message: str,
     human_time: str,
     location=None,
+    address=None,
 ) -> str:
     """
     Compose a nice, human-readable notification string for Discord/ntfy.
@@ -85,7 +102,7 @@ def _build_human_friendly_content(
             lng = float(location["lng"])
             maps_url = f"https://maps.google.com/?q={lat},{lng}"
             location_block = (
-                f"• **Location:** {lat:.5f}, {lng:.5f}\n"
+                f"• **Location:** {address}\n"
                 f"• **Map:** {maps_url}\n"
             )
         except (KeyError, TypeError, ValueError):
