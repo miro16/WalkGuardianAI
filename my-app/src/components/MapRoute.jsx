@@ -52,15 +52,15 @@ export default function MapRoute({ address, onBack }) {
     }
 
     const getCurrentPosition = () =>
-    new Promise((resolve, reject) => {
-      if (!('geolocation' in navigator)) {
-        return reject(new Error('Geolocation not supported by browser'))
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve(pos),
-        (err) => reject(err),
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      )
+      new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          return reject(new Error('Geolocation not supported by browser'))
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(pos),
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+       )
     })
 
     const sendTick = async () => {
@@ -95,7 +95,8 @@ export default function MapRoute({ address, onBack }) {
       // 2) Send current coordinates to /api/session/location
       try {
         const pos = await getCurrentPosition()
-        const { latitude: lat, longitude: lng } = pos.coords
+        lat = pos.coords.latitude
+        lng = pos.coords.longitude
 
         await fetch('/api/api/session/location', {
           method: 'POST',
