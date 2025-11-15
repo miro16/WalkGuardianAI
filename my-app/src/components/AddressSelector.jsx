@@ -63,6 +63,18 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
       }
     })()
 
+    const contact =
+      channel === 'Discord'
+        ? {
+            type: 'discord',
+            value:
+              'https://discordapp.com/api/webhooks/1438995606583513213/7-PSioBqUXtfQpVAMKMeImiqTyq246e77celx4fsUFA6qreb4vhU6WtdCZATEOmbjR5L'
+          }
+        : {
+            type: 'ntfy',
+            value: 'Bartek'
+          }
+
     const payload = {
       // Required user fields (snake_case)
       first_name: storedUser?.firstName ?? '',
@@ -77,11 +89,7 @@ export default function AddressSelector({ onAddressSelect, onBack }) {
       // Session fields
       start_location: { lat, lng },
       destination: destinationAddress,
-      contact: {
-        type: 'discord',
-        value:
-          'https://discordapp.com/api/webhooks/1438995606583513213/7-PSioBqUXtfQpVAMKMeImiqTyq246e77celx4fsUFA6qreb4vhU6WtdCZATEOmbjR5L'
-      },
+      contact,
       audio_enabled: true
     }
 
