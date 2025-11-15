@@ -15,9 +15,11 @@ async def add_notification(session_id: str, notification_type: str, message: str
         # Session might have been removed or never existed – fail silently
         return
 
-    now_utc = datetime.now(timezone.utc)                   # datetime object
-    now_iso = now_utc.isoformat()                          # string, for storage
-    human_time = now_utc.strftime("%Y-%m-%d %H:%M:%S %Z")  # string, pretty
+    # now_utc = datetime.now(timezone.utc)                   # datetime object
+    # now_iso = now_utc.isoformat()                          # string, for storage
+    now_cet = datetime.now(ZoneInfo("Europe/Warsaw"))          # CET/CEST zależnie od daty
+    now_iso = now_cet.isoformat()
+    human_time = now_cet.strftime("%Y-%m-%d %H:%M:%S %Z")  # string, pretty
 
     # 1) Store notification in memory
     session.setdefault("notifications", []).append(
