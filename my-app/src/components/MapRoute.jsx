@@ -214,14 +214,6 @@ export default function MapRoute({ address, onBack }) {
             </button>
           )}
 
-          <button 
-            className="health-button"
-            onClick={handleCheckBackendHealth}
-            disabled={checkingBackend}
-          >
-            {checkingBackend ? '🔄 Checking...' : '🏥 Backend'}
-          </button>
-
           {backendStatus && (
             <div className={`health-status ${backendStatus === 'ok' ? 'online' : 'offline'}`}>
               {backendStatus}
