@@ -31,7 +31,7 @@ from .llama_client import LlamaBackend
 app = FastAPI(title="WalkGuardianAI Backend V0")
 
 # Load safety analysis prompt from external file
-PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_prompt.txt")
+PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_analysis_prompt")
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     prompt = f.read()
 
