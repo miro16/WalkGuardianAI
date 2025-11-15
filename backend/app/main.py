@@ -23,6 +23,7 @@ from .schemas import (
 from .analysis import analyze_text
 from .notifications import add_notification
 from .llama_client import LlamaBackend
+from .reverse_geocode import reverse_geocode
 
 # ---------------------------------------------------------
 # WalkGuardianAI - backend MVP (in-memory, multi-session)
@@ -31,7 +32,7 @@ from .llama_client import LlamaBackend
 app = FastAPI(title="WalkGuardianAI Backend V0")
 
 # Load safety analysis prompt from external file
-PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_analysis_prompt")
+PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "safety_analysis_prompt.txt")
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     prompt = f.read()
 
@@ -275,3 +276,11 @@ async def stop_session(body: StopSessionRequest):
         "status": "FINISHED",
         "risk": session["risk"],
     }
+
+@app.get("/api/reverse-geocode")
+async def reverse_geocode_endpoint(lat: float, lon: float):
+    """
+    Proxy endpoint for reverse geocoding coordinates via Nominatim.
+    Called by the React frontend instead of hitting Nominatim directly.
+    """
+    return await reverse_geocode(lat=lat, lon=lon)
